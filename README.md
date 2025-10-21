@@ -1,16 +1,7 @@
-# tes
+# First Thing First
+Please kindly visit the _discussions_ for any inquiries
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# About Project
+An app to track your goal(s) list.
+Set deadlines for your goals and let the app track your achivement overtime
+It also records your date-completed goal as a log, so you can track your own growth!
