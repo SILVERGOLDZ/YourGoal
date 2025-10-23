@@ -57,15 +57,14 @@ flutter_native_splash:
   image: assets/images/splash.png
   android_gravity: fill
 
-  # (Opsional) Jika Anda ingin gambar mengisi seluruh layar
-  # android_gravity: fill
-  # ios_content_mode: scaleAspectFill
 
-  # (Opsional) Ini adalah konfigurasi modern untuk Android 12+
-  # Anda bisa menggunakan gambar yang sama atau gambar ikon yang lebih kecil
   android_12:
-    image: assets/images/splash.png
-    icon_background_color: "#FFFFFF"
+  # Ini adalah bagian khusus untuk Android 12+
+  # Gunakan logo transparan yang sama
+    image: assets/images/splash_logo.png
+
+    # Samakan warna ini dengan 'color' di atas agar konsisten
+    icon_background_color: "#5B94FF"
 
 # The following section is specific to Flutter packages.
 flutter:
