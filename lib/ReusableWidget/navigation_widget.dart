@@ -40,36 +40,74 @@ class _navigation_widgetState extends State<navigation_widget> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.colorScheme.inversePrimary,
-        title: const Text('My App Shell'), // Ganti judul jika perlu
+        title: const Text('bagaimana buat latar birunya?'), // Ganti judul jika perlu
       ),
 
       // 5. Body sekarang memanggil 'pages'
       body: pages[currentPageIndex],
-
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           setState(() {
             currentPageIndex = index;
           });
         },
-        indicatorColor: Colors.amber,
+        indicatorColor: Colors.transparent,
         selectedIndex: currentPageIndex,
-        destinations: const <Widget>[
-          NavigationDestination(
-            selectedIcon: Icon(Icons.home),
-            icon: Icon(Icons.home_outlined),
+        destinations: <Widget>[
+          NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
+            selectedIcon: Image.asset(
+              'assets/images/Dashboard_logo.png',
+              width: 24,
+              height: 24,
+              color: const Color(0xFF137FEC),
+            ),
+            icon: Image.asset(
+              'assets/images/Dashboard_logo.png',
+              width: 24, // Jangan lupa atur ukuran
+              height: 24,
+            ),
             label: 'Dashboard',
           ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
+          NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
+            selectedIcon: Image.asset(
+              'assets/images/My_Goal_Logo.png',
+              width: 24,
+              height: 24,
+              color: const Color(0xFF137FEC),
+            ),
+            icon: Image.asset(
+              'assets/images/My_Goal_Logo.png',
+              width: 24, // Jangan lupa atur ukuran
+              height: 24,
+            ),
             label: 'My Goal',
           ),
-          NavigationDestination(
-            icon: Badge(child: Icon(Icons.notifications_sharp)),
+          NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
+            selectedIcon: Image.asset(
+              'assets/images/Notification_logo.png',
+              width: 24,
+              height: 24,
+              color: const Color(0xFF137FEC),
+            ),
+            icon: Image.asset(
+              'assets/images/Notification_logo.png',
+              width: 24, // Jangan lupa atur ukuran
+              height: 24,
+            ),
             label: 'Notifications',
           ),
-          NavigationDestination(
-            icon: Badge(label: Text('2'), child: Icon(Icons.messenger_sharp)),
+          NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
+            selectedIcon: Image.asset(
+              'assets/images/profile_logo.png',
+              width: 24,
+              height: 24,
+              color: const Color(0xFF137FEC),
+            ),
+            icon: Image.asset(
+              'assets/images/profile_logo.png',
+              width: 24, // Jangan lupa atur ukuran
+              height: 24,
+            ),
             label: 'Profile',
           ),
         ],
