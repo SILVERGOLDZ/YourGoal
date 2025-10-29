@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tes/pages/notification.dart';
 import 'package:tes/pages/home_page.dart';
-import 'package:tes/pages/MyGoal_page.dart';
-import 'package:tes/pages/Profile_page.dart';
+import 'package:tes/pages/mygoal_page.dart';
+import 'package:tes/pages/profile_page.dart';
 
 class navigation_widget extends StatefulWidget {
   const navigation_widget({super.key});
@@ -31,17 +31,17 @@ class _navigation_widgetState extends State<navigation_widget> {
     final List<Widget> pages = [
       // Berikan state _counter ke HomePage
       HomePage(counterValue: _counter),
-      const MyGoal_page(),
-      const notification(),
-      const Profile_page(),
+      const MyGoalPage(),
+      const NotificationPage(),
+      const ProfilePage(),
     ];
 
     // 4. Seluruh Scaffold tetap di sini
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.inversePrimary,
-        title: const Text('bagaimana buat latar birunya?'), // Ganti judul jika perlu
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: theme.colorScheme.inversePrimary,
+      //   title: const Text('bagaimana buat latar birunya?'), // Ganti judul jika perlu
+      // ),
 
       // 5. Body sekarang memanggil 'pages'
       body: pages[currentPageIndex],
