@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/navigation_widget.dart'; // Impor halaman Home/utama
+import 'package:go_router/go_router.dart';
 import 'package:tes/theme/colors.dart'; // Impor warna kustom
 import 'Register.dart'; // Impor halaman Register untuk navigasi
 
@@ -45,10 +45,7 @@ class _LoginPageState extends State<LoginPage> {
       // Jika login berhasil, bawa pengguna ke halaman utama (navigation_widget).
       // pushReplacement menghapus halaman Login dari tumpukan,
       // sehingga pengguna tidak bisa kembali ke halaman Login dengan tombol back.
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const navigation_widget()),
-      );
+      context.goNamed('home');
     }
   }
 
@@ -56,19 +53,13 @@ class _LoginPageState extends State<LoginPage> {
   // Sesuai permintaan, tombol ini akan langsung ke halaman utama
   void _socialLogin() {
     print('Login sosial sukses (placeholder)');
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const navigation_widget()),
-    );
+    context.goNamed('home');
   }
 
   // Fungsi untuk beralih ke halaman Register
   void _goToRegister() {
-    // Ganti halaman saat ini (Login) dengan halaman Register
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const RegisterPage()),
-    );
+    // Ganti halaman saat ini (Login) dengan halaman Register      context.goNamed('home');
+    context.goNamed('register');
   }
 
   @override
