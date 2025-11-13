@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/navigation_widget.dart';
 import 'theme/app_theme.dart';
-import 'ReusableWidget/navigation_widget.dart';
+import 'package:tes/pages/Login&Register/login.dart'; // ✅ Impor RegisterPage
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme, // ✅ theme is cleanly separated
-      home: const navigation_widget(),
+      home: const LoginPage(),
     );
   }
 }
