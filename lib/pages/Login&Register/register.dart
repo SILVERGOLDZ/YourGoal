@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tes/pages/Login&Register/Login.dart'; // Impor LoginPage
 import 'package:tes/theme/colors.dart'; // Impor warna
+import 'package:go_router/go_router.dart';
 
 // Halaman StatefulWidget untuk Registrasi
 class RegisterPage extends StatefulWidget {
@@ -45,10 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       // (Navigasi)
       // Bawa pengguna ke halaman Login setelah berhasil mendaftar
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      context.goNamed('login');
     }
   }
 
@@ -60,15 +58,13 @@ class _RegisterPageState extends State<RegisterPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // Logika untuk kembali (mungkin kembali ke Login)
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
+            // 1. Gunakan context.canPop() dari GoRouter
+            if (context.canPop()) {
+              // 2. Gunakan context.pop() dari GoRouter
+              context.pop();
             } else {
-              // Jika tidak bisa pop, kembali ke LoginPage sebagai fallback
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
-              );
+              // 3. Fallback jika tidak ada halaman di bawahnya
+              context.goNamed('login');
             }
           },
         ),

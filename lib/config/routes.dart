@@ -6,8 +6,12 @@ import '/pages/home_page.dart';
 import '/pages/mygoal_page.dart';
 import '/pages/notification.dart';
 import '/pages/profile_page.dart';
+import '/pages/Login&Register/login.dart';
+import '/pages/Login&Register/register.dart';
 
 class AppRoutes {
+  static const String login = '/login';
+  static const String register = '/register';
   static const String notification = '/notification';
   static const String mygoal = '/mygoal';
   static const String home = '/home';
@@ -19,14 +23,18 @@ GoRouter createRouter() {
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
-    initialLocation: AppRoutes.home,
+    initialLocation: AppRoutes.login,
     routes: [
-      // GoRoute(
-      //   path: AppRoutes.quiz,
-      //   name: 'quiz',
-      //   builder: (context, state) => QuizPage(),
-      // ),
-
+      GoRoute(
+      path: AppRoutes.login,
+      name: 'login',
+      builder: (context, state) => LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        name: 'register',
+        builder: (context, state) => RegisterPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return BottomNavigationShell(navigationShell: navigationShell);
