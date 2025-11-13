@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/navigation_widget.dart';
+import 'package:tes/config/routes.dart';
 import 'theme/app_theme.dart';
-import 'ReusableWidget/navigation_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,11 +11,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    return MaterialApp.router(
+      title: 'YourGoal',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme, // ✅ theme is cleanly separated
-      home: const navigation_widget(),
+      theme: AppTheme.lightTheme,
+      routerConfig: createRouter(),
     );
   }
 }
