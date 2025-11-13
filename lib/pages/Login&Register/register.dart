@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:tes/theme/colors.dart'; // Impor warna kustom
-import 'Login.dart'; // Impor halaman Login untuk navigasi
+import 'package:tes/pages/Login&Register/Login.dart'; // Impor LoginPage
+import 'package:tes/theme/colors.dart'; // Impor warna
 
-// RegisterPage adalah StatefulWidget karena kita perlu mengelola status
-// seperti teks dalam form dan visibilitas password.
+// Halaman StatefulWidget untuk Registrasi
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -11,48 +10,41 @@ class RegisterPage extends StatefulWidget {
   State<RegisterPage> createState() => _RegisterPageState();
 }
 
-// Ini adalah kelas State untuk RegisterPage.
 class _RegisterPageState extends State<RegisterPage> {
-  // GlobalKey<FormState> digunakan untuk mengidentifikasi Form secara unik
-  // dan memungkinkan kita untuk memvalidasi input di dalamnya.
+  // GlobalKey untuk validasi Form
   final _formKey = GlobalKey<FormState>();
 
-  // TextEditingController digunakan untuk membaca dan mengontrol teks
-  // dari sebuah TextFormField.
+  // Controller untuk setiap input field
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
 
-  // Variabel boolean untuk mengontrol visibilitas password (show/hide).
+  // State untuk visibilitas password
   bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
-    // Penting: Selalu dispose controller ketika widget tidak lagi digunakan
-    // untuk menghindari kebocoran memori (memory leaks).
+    // Selalu dispose controller untuk mencegah memory leaks
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
-  // Fungsi yang dipanggil saat tombol "Daftar" ditekan
+  // Fungsi yang dipanggil saat tombol "NEXT" ditekan
   void _register() {
-    // Langkah 1: Validasi form menggunakan _formKey.
-    // `currentState!.validate()` akan menjalankan fungsi validator
-    // di setiap TextFormField. Jika semua valid, ia mengembalikan true.
+    // Jalankan validasi form
     if (_formKey.currentState!.validate()) {
-      // Langkah 2: (Logika Bisnis)
-      // Jika form valid, di sinilah Anda akan memanggil API,
-      // menyimpan ke database, atau melakukan proses registrasi.
-      // print('Email: ${_emailController.text}');
-      // print('Password: ${_passwordController.text}');
-      print('Registrasi sukses');
+      // (Logika Bisnis)
+      // Di sini Anda akan mengirim data registrasi ke API atau database.
+      print('Register sukses');
 
-      // Langkah 3: Navigasi ke halaman Login setelah registrasi berhasil.
-      // Kita menggunakan pushReplacement agar pengguna tidak bisa menekan "kembali"
-      // dari halaman Login ke halaman Register.
+      // (Navigasi)
+      // Bawa pengguna ke halaman Login setelah berhasil mendaftar
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -60,186 +52,221 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  // Fungsi untuk beralih ke halaman Login
-  void _goToLogin() {
-    // Navigasi ke halaman Login dan mengganti halaman saat ini (Register)
-    // Ini mencegah tumpukan halaman yang tidak perlu.
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Scaffold adalah layout dasar untuk halaman dengan app bar, body, dll.
     return Scaffold(
-      // SafeArea memastikan konten tidak terhalang oleh notch atau status bar sistem.
+      // 1. AppBar - Disesuaikan agar sama dengan screenshot (hanya tombol kembali)
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            // Logika untuk kembali (mungkin kembali ke Login)
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              // Jika tidak bisa pop, kembali ke LoginPage sebagai fallback
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            }
+          },
+        ),
+        backgroundColor: Colors.white, // Latar belakang AppBar
+        elevation: 0, // Tanpa bayangan
+      ),
+      backgroundColor: Colors.white, // Latar belakang Scaffold
       body: SafeArea(
-        // Center menengahkan widget anaknya.
-        child: Center(
-          // SingleChildScrollView memungkinkan konten di-scroll jika
-          // ukurannya melebihi layar (misalnya saat keyboard muncul).
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0), // Padding di sekeliling form
-            // Widget Form menghubungkan _formKey dengan TextFormField di dalamnya.
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Pusatkan secara vertikal
-                crossAxisAlignment: CrossAxisAlignment.stretch, // Lebarkan widget (misalnya tombol)
-                children: [
-                  // --- Judul Halaman ---
-                  Text(
-                    'Buat Akun',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.active,
-                    ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 2. Judul "Sign Up"
+                const Text(
+                  'Sign Up',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Mulai perjalanan baru Anda bersama kami!',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                ),
+                const SizedBox(height: 40),
+
+                // 3. Form Fields (menggunakan helper)
+                // First Name
+                _buildTextFieldWithLabel(
+                  controller: _firstNameController,
+                  label: 'First Name*',
+                  hint: 'Enter your name',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'First name cannot be empty';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Last Name
+                _buildTextFieldWithLabel(
+                  controller: _lastNameController,
+                  label: 'Last Name*',
+                  hint: 'Enter your last name',
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Last name cannot be empty';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Email
+                _buildTextFieldWithLabel(
+                  controller: _emailController,
+                  label: 'Email*',
+                  hint: 'Enter your email',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email cannot be empty';
+                    }
+                    if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // Password
+                _buildTextFieldWithLabel(
+                  controller: _passwordController,
+                  label: 'Password*',
+                  hint: '********',
+                  obscureText: _obscurePassword,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
                       color: AppColors.inactive,
                     ),
-                  ), // ✅ Tambahkan koma di sini
-                  const SizedBox(height: 40), // Spasi
-
-                  // --- Form Email ---
-                  TextFormField(
-                    controller: _emailController, // Hubungkan ke controller
-                    keyboardType: TextInputType.emailAddress, // Tampilkan keyboard email
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined), // Ikon di depan
-                    ),
-                    // Validator akan dijalankan saat _formKey.currentState!.validate() dipanggil
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      // Validasi email sederhana menggunakan Regex
-                      if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                        return 'Masukkan alamat email yang valid';
-                      }
-                      return null; // Kembalikan null jika valid
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
                     },
                   ),
-                  const SizedBox(height: 20), // Spasi
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Password cannot be empty';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
 
-                  // --- Form Password ---
-                  TextFormField(
-                    controller: _passwordController, // Hubungkan ke controller
-                    obscureText: _obscurePassword, // Sembunyikan teks (jika true)
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      // Ikon di belakang (suffix) untuk toggle visibilitas
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          // Ubah ikon berdasarkan status _obscurePassword
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        // Saat ditekan, ubah status visibilitas
-                        onPressed: () {
-                          setState(() { // Panggil setState untuk membangun ulang UI
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      if (value.length < 6) {
-                        return 'Password minimal 6 karakter';
-                      }
-                      return null; // Valid
-                    },
-                  ),
-                  const SizedBox(height: 20), // Spasi
+                // Phone Number
+                _buildTextFieldWithLabel(
+                  controller: _phoneController,
+                  label: 'Phone Number (Optional)',
+                  hint: 'Start with your country code (e.g. +62)',
+                  keyboardType: TextInputType.phone,
+                  // Tidak ada validator karena opsional
+                ),
+                const SizedBox(height: 40),
 
-                  // --- Form Konfirmasi Password ---
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: _obscureConfirmPassword,
-                    decoration: InputDecoration(
-                      labelText: 'Konfirmasi Password',
-                      prefixIcon: const Icon(Icons.lock_clock_outlined),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Konfirmasi password tidak boleh kosong';
-                      }
-                      // Periksa apakah nilainya sama dengan teks di _passwordController
-                      if (value != _passwordController.text) {
-                        return 'Password tidak cocok';
-                      }
-                      return null; // Valid
-                    },
-                  ),
-                  const SizedBox(height: 30), // Spasi
-
-                  // --- Tombol Register ---
-                  ElevatedButton(
-                    onPressed: _register, // Panggil fungsi _register saat ditekan
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.active,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Daftar', style: TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 20), // Spasi
-
-                  // --- Link ke Login ---
-                  // TextButton adalah tombol tanpa latar belakang, cocok untuk link
-                  TextButton(
-                    onPressed: _goToLogin, // Panggil fungsi _goToLogin saat ditekan
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Sudah punya akun? ',
-                          style: TextStyle(color: AppColors.inactive),
-                        ),
-                        const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.active,
-                          ),
-                        ),
-                      ],
+                // 4. Tombol "NEXT"
+                ElevatedButton(
+                  onPressed: _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.active,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ],
-              ),
+                  child: const Text('NEXT', style: TextStyle(fontSize: 16)),
+                ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // Helper Widget untuk membuat form (Label di atas, TextForm di bawah)
+  Widget _buildTextFieldWithLabel({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    Widget? suffixIcon,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Label Teks
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Text Form Field
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          validator: validator,
+          decoration: InputDecoration(
+            // --- Catatan ---
+            // Kode ini secara eksplisit MENGGANTI (override)
+            // InputDecorationTheme dari app_theme.dart.
+            // Ini diperlukan karena app_theme.dart Anda mendefinisikan
+            // style "filled" (BorderSide.none), sedangkan screenshot
+            // Anda menggunakan style "outlined" (dengan border abu-abu).
+
+            filled: false,
+            hintText: hint,
+            hintStyle: const TextStyle(color: AppColors.inactive),
+            // Tentukan border standar (Outline)
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppColors.inactive.withOpacity(0.5)),
+            ),
+            // Tentukan border saat enabled
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppColors.inactive.withOpacity(0.5)),
+            ),
+            // Tentukan border saat fokus
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.active, width: 2.0),
+            ),
+            suffixIcon: suffixIcon,
+            // Mengatur padding konten
+            contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          ),
+        ),
+      ],
     );
   }
 }
