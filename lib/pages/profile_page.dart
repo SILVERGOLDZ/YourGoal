@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/base_page.dart'; //bg color + transparent status bar with safe area
+import 'package:tes/Widget/base_page.dart'; //bg color + transparent status bar with safe area
 
 // Gunakan PascalCase untuk nama class (ProfilePage)
 class ProfilePage extends StatelessWidget {

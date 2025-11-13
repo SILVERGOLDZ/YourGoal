@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/base_page.dart';
-import 'package:tes/ReusableWidget/gradient_button.dart';
-import 'package:tes/ReusableWidget/mygradient_card.dart'; //bg color + transparent status bar with safe area
+import 'package:tes/Widget/base_page.dart';
+import 'package:tes/Widget/gradient_button.dart';
+import 'package:tes/Widget/mygradient_card.dart'; //bg color + transparent status bar with safe area
 
 class MyGoalPage extends StatelessWidget {
   const MyGoalPage({super.key});

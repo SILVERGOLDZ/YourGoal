@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tes/config/routes.dart';
 import 'theme/app_theme.dart';
-import 'package:tes/pages/Login&Register/login.dart'; // ✅ Impor RegisterPage
 
 void main() {
   runApp(const MyApp());
@@ -11,11 +11,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    return MaterialApp.router(
+      title: 'YourGoal',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme, // ✅ theme is cleanly separated
-      home: const LoginPage(),
+      theme: AppTheme.lightTheme,
+      routerConfig: createRouter(),
     );
   }
 }
