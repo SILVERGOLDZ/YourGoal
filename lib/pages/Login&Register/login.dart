@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/theme/colors.dart'; // Impor warna kustom
-import 'Register.dart'; // Impor halaman Register untuk navigasi
+import 'package:tes/auth_service.dart'; // Import AuthService
 
 // LoginPage adalah StatefulWidget untuk mengelola state form
 class LoginPage extends StatefulWidget {
@@ -13,252 +13,298 @@ class LoginPage extends StatefulWidget {
 
 // Kelas State untuk LoginPage
 class _LoginPageState extends State<LoginPage> {
-  // Key untuk mengidentifikasi dan memvalidasi Form
   final _formKey = GlobalKey<FormState>();
-
-  // Controller untuk input email dan password
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
-  // State untuk visibilitas password
   bool _obscurePassword = true;
+
+  // Firebase
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    // Selalu dispose controller untuk mencegah memory leaks
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   // Fungsi yang dipanggil saat tombol "Login" ditekan
-  void _login() {
-    // Validasi input form
+  void _login() async {
     if (_formKey.currentState!.validate()) {
-      // (Logika Bisnis)
-      // Di sini Anda akan memeriksa email dan password ke API atau database.
-      // print('Email: ${_emailController.text}');
-      // print('Password: ${_passwordController.text}');
-      print('Login sukses');
+      setState(() {
+        _isLoading = true;
+      });
 
-      // (Navigasi)
-      // Jika login berhasil, bawa pengguna ke halaman utama (navigation_widget).
-      // pushReplacement menghapus halaman Login dari tumpukan,
-      // sehingga pengguna tidak bisa kembali ke halaman Login dengan tombol back.
-      context.goNamed('home');
+      // (Logika Bisnis)
+      final userCredential = await _authService.signInWithEmailPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        // Check if the widget is still in the tree
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (userCredential == null) {
+          // Show error message
+          _showErrorSnackBar('Login failed. Please check your credentials.');
+        }
+        // No need to navigate, the router's redirect will handle it.
+      }
     }
   }
 
-  // --- Navigasi sementara untuk tombol sosial ---
-  // Sesuai permintaan, tombol ini akan langsung ke halaman utama
-  void _socialLogin() {
-    print('Login sosial sukses (placeholder)');
-    context.goNamed('home');
+  // --- Navigasi untuk tombol sosial ---
+  void _googleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final userCredential = await _authService.signInWithGoogle();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (userCredential == null) {
+        _showErrorSnackBar('Google Sign-In failed. Please try again.');
+      }
+      // No need to navigate, the router's redirect will handle it.
+    }
+  }
+
+  // Non-functional social logins
+  void _socialLoginNotImplemented() {
+    _showErrorSnackBar('This feature is not yet implemented.');
   }
 
   // Fungsi untuk beralih ke halaman Register
   void _goToRegister() {
-    // Ganti halaman saat ini (Login) dengan halaman Register      context.goNamed('home');
     context.goNamed('register');
+  }
+
+  // Helper to show SnackBar
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          // SingleChildScrollView agar tidak error saat keyboard muncul
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            // Form widget untuk validasi
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // --- Judul Halaman ---
-                  // Menggunakan RichText untuk styling "Your" dan "Gooal"
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      // Style dasar diambil dari tema, tanpa warna
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+        child: Stack(
+          children: [
+            // --- Main Content ---
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // --- Judul Halaman ---
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'Your',
+                              style: TextStyle(
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.color),
+                            ),
+                            TextSpan(
+                              text: 'Gooal',
+                              style: TextStyle(color: AppColors.active),
+                            ),
+                          ],
+                        ),
                       ),
-                      children: [
-                        TextSpan(
-                          text: 'Your',
-                          // Atur warna hitam (atau warna teks default)
-                          style: TextStyle(
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.color),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Login untuk melanjutkan',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: AppColors.inactive,
                         ),
-                        TextSpan(
-                          text: 'Gooal',
-                          style:
-                          TextStyle(color: AppColors.active), // Warna biru
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 4), // Jarak diperkecil dari 8
-                  Text(
-                    'Login untuk melanjutkan',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.inactive,
-                    ),
-                  ), // ✅ Tambahkan koma di sini
-                  const SizedBox(height: 40), // Spasi
+                      ),
+                      const SizedBox(height: 40),
 
-                  // --- Form Email ---
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email_outlined),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Email tidak boleh kosong';
-                      }
-                      if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                        return 'Masukkan alamat email yang valid';
-                      }
-                      return null; // Valid
-                    },
-                  ),
-                  const SizedBox(height: 20), // Spasi
-
-                  // --- Form Password ---
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword, // Sembunyikan teks
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      // Tombol ikon untuk toggle visibilitas password
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
+                      // --- Form Email ---
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email_outlined),
                         ),
-                        // Ubah state _obscurePassword saat ditekan
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email tidak boleh kosong';
+                          }
+                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
+                            return 'Masukkan alamat email yang valid';
+                          }
+                          return null;
                         },
                       ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password tidak boleh kosong';
-                      }
-                      return null; // Valid
-                    },
-                  ),
-                  const SizedBox(height: 30), // Spasi
+                      const SizedBox(height: 20),
 
-                  // --- Tombol Login ---
-                  ElevatedButton(
-                    onPressed: _login, // Panggil fungsi _login
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.active,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      // --- Form Password ---
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password tidak boleh kosong';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    child: const Text('Login', style: TextStyle(fontSize: 16)),
-                  ),
-                  const SizedBox(height: 30), // Spasi pemisah
+                      const SizedBox(height: 30),
 
-                  // --- Pemisah "Or" ---
-                  Row(
-                    children: [
-                      Expanded(
-                          child: Divider(
-                              color: AppColors.inactive.withOpacity(0.5))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          'Or',
-                          style: TextStyle(color: AppColors.inactive),
+                      // --- Tombol Login ---
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _login, // Disable if loading
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.active,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child:
+                        const Text('Login', style: TextStyle(fontSize: 16)),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // --- Pemisah "Or" ---
+                      Row(
+                        children: [
+                          Expanded(
+                              child: Divider(
+                                  color: AppColors.inactive.withOpacity(0.5))),
+                          Padding(
+                            padding:
+                            const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text(
+                              'Or',
+                              style: TextStyle(color: AppColors.inactive),
+                            ),
+                          ),
+                          Expanded(
+                              child: Divider(
+                                  color: AppColors.inactive.withOpacity(0.5))),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+
+                      // --- Tombol Social Login ---
+                      _buildSocialLoginButton(
+                        onPressed: _isLoading
+                            ? () {}
+                            : _socialLoginNotImplemented, // Non-functional
+                        icon: Icons.apple,
+                        label: 'Continue with Apple',
+                        iconColor: Colors.black,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSocialLoginButton(
+                        onPressed:
+                        _isLoading ? () {} : _googleLogin, // Functional
+                        iconWidget: Image.asset(
+                          'assets/images/google_icon.png',
+                          height: 28.0,
+                          width: 28.0,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(Icons.g_mobiledata,
+                                color: AppColors.active, size: 28.0);
+                          },
+                        ),
+                        label: 'Continue with Google',
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSocialLoginButton(
+                        onPressed: _isLoading
+                            ? () {}
+                            : _socialLoginNotImplemented, // Non-functional
+                        icon: Icons.facebook,
+                        label: 'Continue with Facebook',
+                        iconColor: const Color(0xFF1877F2),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // --- Link ke Register ---
+                      TextButton(
+                        onPressed: _isLoading ? null : _goToRegister,
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Create an Account',
+                              style: TextStyle(color: Colors.black),
+                            ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                          child: Divider(
-                              color: AppColors.inactive.withOpacity(0.5))),
                     ],
                   ),
-                  const SizedBox(height: 30), // Spasi pemisah
-
-                  // --- Tombol Social Login ---
-                  _buildSocialLoginButton(
-                    onPressed: _socialLogin,
-                    icon: Icons.apple,
-                    label: 'Continue with Apple',
-                    iconColor: Colors.black, // Ikon Apple biasanya hitam
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialLoginButton(
-                    onPressed: _socialLogin,
-                    // Menggunakan logo Google dari asset lokal
-                    iconWidget: Image.asset(
-                      'assets/images/google_icon.png', // ✅ Ganti ke path asset Anda
-                      height: 28.0, // Ukuran diperbesar
-                      width: 28.0, // Ukuran diperbesar
-                      // Tambahkan error builder jika asset tidak ditemukan
-                      errorBuilder: (context, error, stackTrace) {
-                        print("Error loading Google asset: $error");
-                        // Fallback jika asset gagal dimuat
-                        return const Icon(Icons.g_mobiledata,
-                            color: AppColors.active, size: 28.0);
-                      },
-                    ),
-                    label: 'Continue with Google',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialLoginButton(
-                    onPressed: _socialLogin,
-                    icon: Icons.facebook,
-                    label: 'Continue with Facebook',
-                    iconColor: Color(0xFF1877F2), // Warna biru Facebook
-                  ),
-
-                  const SizedBox(height: 10), // Spasi
-
-                  // --- Link ke Register ---
-                  // Dipindahkan ke paling bawah, sesuai gambar "Create a Account"
-                  TextButton(
-                    onPressed: _goToRegister, // Panggil fungsi _goToRegister
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Create an Account',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+
+            // --- Loading Overlay ---
+            if (_isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // --- Widget Kustom untuk Tombol Social Login ---
+  // Widget Kustom untuk Tombol Social Login
   Widget _buildSocialLoginButton({
     required VoidCallback onPressed,
     required String label,
@@ -272,25 +318,21 @@ class _LoginPageState extends State<LoginPage> {
           Icon(
             icon,
             color: iconColor ??
-                Theme.of(context)
-                    .textTheme
-                    .bodyLarge
-                    ?.color, // Warna ikon default
-            size: 28.0, // ✅ Ukuran diperbesar untuk Apple & Facebook
+                Theme.of(context).textTheme.bodyLarge?.color,
+            size: 28.0,
           ),
       label: Text(
         label,
         style: TextStyle(
-          color: Theme.of(context).textTheme.bodyLarge?.color, // Warna teks default
+          color: Theme.of(context).textTheme.bodyLarge?.color,
           fontWeight: FontWeight.w600,
         ),
       ),
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-        side: BorderSide(
-            color: AppColors.inactive.withOpacity(0.3)), // Border abu-abu tipis
+        side: BorderSide(color: AppColors.inactive.withOpacity(0.3)),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30), // Border sangat bulat
+          borderRadius: BorderRadius.circular(30),
         ),
       ),
     );
