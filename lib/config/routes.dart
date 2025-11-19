@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
 import '/Widget/navigation_widget.dart';
 import '/pages/home_page.dart';
@@ -18,23 +19,54 @@ class AppRoutes {
   static const String profile = '/profile';
 }
 
-GoRouter createRouter() {
+// Pass the auth state stream to the router
+GoRouter createRouter(Stream<User?> authStream) {
   final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
+  // Define public routes (no auth required)
+  final publicRoutes = [
+    AppRoutes.login,
+    AppRoutes.register,
+  ];
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.login,
+    // Add refreshListenable to make GoRouter react to auth state changes
+    refreshListenable: GoRouterRefreshStream(authStream),
+
+    // Add redirect logic
+    redirect: (BuildContext context, GoRouterState state) {
+      final bool loggedIn = FirebaseAuth.instance.currentUser != null;
+      final String location = state.uri.toString();
+      final bool isGoingToPublicRoute = publicRoutes.contains(location);
+
+      // 1. If user is logged in and trying to access login/register, redirect to home
+      if (loggedIn && isGoingToPublicRoute) {
+        return AppRoutes.home;
+      }
+
+      // 2. If user is NOT logged in and trying to access a protected route, redirect to login
+      if (!loggedIn && !isGoingToPublicRoute) {
+        return AppRoutes.login;
+      }
+
+      // 3. No redirect needed
+      return null;
+    },
+
     routes: [
       GoRoute(
-      path: AppRoutes.login,
-      name: 'login',
-      builder: (context, state) => LoginPage(),
+        path: AppRoutes.login,
+        name: 'login',
+        builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
         path: AppRoutes.register,
         name: 'register',
-        builder: (context, state) => RegisterPage(),
+        builder: (context, state) => const RegisterPage(),
       ),
+      // This StatefulShellRoute is your main app (protected routes)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return BottomNavigationShell(navigationShell: navigationShell);
@@ -49,7 +81,6 @@ GoRouter createRouter() {
               ),
             ],
           ),
-
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -59,7 +90,6 @@ GoRouter createRouter() {
               ),
             ],
           ),
-
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -69,7 +99,6 @@ GoRouter createRouter() {
               ),
             ],
           ),
-
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -105,4 +134,12 @@ GoRouter createRouter() {
       ),
     ),
   );
+}
+
+// Helper class to bridge the Stream to a Listenable for GoRouter
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
 }
