@@ -72,6 +72,16 @@ class _MyGoalPageState extends State<MyGoalPage> {
         ),
         const Spacer(), // Pushes content to the middle/bottom
 
+        // Big Rocket Logo from assets
+        Center(
+          child: Image.asset(
+            'assets/images/RocketLogo.png',
+            width: 150, // Customize ni ukuran hehehehe
+            height: 150,
+          ),
+        ),
+        const SizedBox(height: 24),
+
         // Center Text
         const Center(
           child: Text(
@@ -193,6 +203,4 @@ class _MyGoalPageState extends State<MyGoalPage> {
       ),
     );
   }
-
-// (No more helper functions at the bottom of the file!)
 }
