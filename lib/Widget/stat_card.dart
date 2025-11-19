@@ -20,7 +20,7 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColor = isBlue ? Colors.white : Colors.black87;
     final subTextColor =
-    isBlue ? Colors.white.withOpacity(0.9) : Colors.grey[600];
+    isBlue ? Colors.white.withValues(alpha: 0.9) : Colors.grey[600];
 
     final decoration = BoxDecoration(
       color: isBlue ? null : Colors.white,

@@ -78,7 +78,7 @@ class GoalCard extends StatelessWidget {
                 "${(progress * 100).toInt()}%",
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 16, // Diubah dari 12 menjadi 14
                 ),
               ),
             ],

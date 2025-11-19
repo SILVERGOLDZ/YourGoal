@@ -59,21 +59,31 @@ class _LoginPageState extends State<LoginPage> {
 
   // --- Navigasi untuk tombol sosial ---
   void _googleLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    final userCredential = await _authService.signInWithGoogle();
+    // Panggil method yang sudah dimodifikasi
+    final result = await _authService.signInWithGoogle();
 
     if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      setState(() => _isLoading = false);
 
-      if (userCredential == null) {
-        _showErrorSnackBar('Google Sign-In failed. Please try again.');
+      if (result['status'] == 'success') {
+        // Router akan otomatis redirect ke Home karena authState berubah
+      } else if (result['status'] == 'needs_registration') {
+        // NAH INI KUNCINYA: Redirect ke Register bawa data
+        context.pushNamed(
+          'register',
+          extra: { // Kirim data via 'extra' object GoRouter
+            'isGoogle': true,
+            'email': result['email'],
+            'firstName': result['firstName'],
+            'lastName': result['lastName'],
+            'uid': result['uid'],
+          },
+        );
+      } else if (result['status'] == 'error') {
+        _showErrorSnackBar(result['message'] ?? 'Google Sign-In failed');
       }
-      // No need to navigate, the router's redirect will handle it.
     }
   }
 
