@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-// import 'package:tes/pages/Login&Register/Login.dart'; // No longer needed
 import 'package:tes/theme/colors.dart'; // Impor warna
 import 'package:go_router/go_router.dart';
 import 'package:tes/auth_service.dart'; // Import your AuthService
 
 // Halaman StatefulWidget untuk Registrasi
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  // Terima data dari Login Page
+  final Map<String, dynamic>? extraData;
+
+  const RegisterPage({super.key, this.extraData});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -26,6 +28,21 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   // ---
 
+  bool _isGoogleFlow = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cek apakah ini flow dari Google
+    if (widget.extraData != null && widget.extraData!['isGoogle'] == true) {
+      _isGoogleFlow = true;
+      _emailController.text = widget.extraData!['email'] ?? '';
+      _firstNameController.text = widget.extraData!['firstName'] ?? '';
+      _lastNameController.text = widget.extraData!['lastName'] ?? '';
+      // Password tidak butuh untuk Google
+    }
+  }
+
   @override
   void dispose() {
     _firstNameController.dispose();
@@ -39,38 +56,47 @@ class _RegisterPageState extends State<RegisterPage> {
   // Fungsi yang dipanggil saat tombol "NEXT" ditekan
   void _register() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
-      // (Logika Bisnis)
-      final userCredential = await _authService.registerWithEmailPassword(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-        _firstNameController.text.trim(),
-        _lastNameController.text.trim(),
-        _phoneController.text.trim().isEmpty
-            ? null
-            : _phoneController.text.trim(),
-      );
+      if (_isGoogleFlow) {
+        // FLOW A: SAVE DATA GOOGLE
+        await _authService.completeGoogleRegistration(
+          uid: widget.extraData!['uid'],
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+        // Karena Auth state sudah login dari proses Google sebelumnya,
+        // User akan otomatis ter-redirect ke Home oleh Router setelah data tersimpan.
+        // Tidak perlu navigasi eksplisit di sini jika router sudah diatur.
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      } else {
+        // FLOW B: REGISTER MANUAL (Kirim Email Verifikasi)
+        String? error = await _authService.registerWithEmailPassword(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _firstNameController.text.trim(),
+          _lastNameController.text.trim(),
+          _phoneController.text.trim(),
+        );
 
-        if (userCredential != null) {
-          // Registrasi sukses
-          _showSuccessSnackBar(
-              'Registration successful! Please log in to continue.');
-          // (Navigasi)
-          context.goNamed('login');
+        if (error == null) {
+          // SUKSES
+          if (mounted) {
+            // HAPUS INI: context.goNamed('login');
+            // Router akan otomatis mendeteksi user login (karena signOut dihapus)
+            // dan redirect ke '/verify-email' karena emailVerified masih false.
+
+            // Cukup tampilkan pesan saja:
+            _showSuccessSnackBar('Akun dibuat. Silakan verifikasi email Anda.');
+          }
         } else {
-          // Registrasi gagal
-          _showErrorSnackBar(
-              'Registration failed. The email might already be in use.');
+          if (mounted) _showErrorSnackBar(error);
         }
       }
+
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -90,13 +116,17 @@ class _RegisterPageState extends State<RegisterPage> {
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.green,
-        duration: const Duration(seconds: 3),
+        duration: const Duration(seconds: 4), // Durasi lebih lama agar terbaca
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Judul dan teks tombol disesuaikan berdasarkan alur
+    final String pageTitle = _isGoogleFlow ? 'Complete Your Profile' : 'Sign Up';
+    final String buttonText = _isGoogleFlow ? 'COMPLETE' : 'NEXT';
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -124,10 +154,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Sign Up',
+                    Text(
+                      pageTitle,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
@@ -169,6 +199,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       label: 'Email*',
                       hint: 'Enter your email',
                       keyboardType: TextInputType.emailAddress,
+                      enabled: !_isGoogleFlow, // Nonaktifkan jika dari Google
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Email cannot be empty';
@@ -181,52 +212,63 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Password
-                    _buildTextFieldWithLabel(
-                      controller: _passwordController,
-                      label: 'Password*',
-                      hint: '********',
-                      obscureText: _obscurePassword,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: AppColors.inactive,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                    // Password (Sembunyikan jika dari Google Flow)
+                    if (!_isGoogleFlow)
+                      Column(
+                        children: [
+                          _buildTextFieldWithLabel(
+                            controller: _passwordController,
+                            label: 'Password*',
+                            hint: '********',
+                            obscureText: _obscurePassword,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: AppColors.inactive,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Password cannot be empty';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                        ],
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password cannot be empty';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
 
-                    // Phone Number
+                    // Phone Number (Wajib diisi jika dari Google)
                     _buildTextFieldWithLabel(
                       controller: _phoneController,
-                      label: 'Phone Number (Optional)',
+                      label:
+                      _isGoogleFlow ? 'Phone Number*' : 'Phone Number (Optional)',
                       hint: 'Start with your country code (e.g. +62)',
                       keyboardType: TextInputType.phone,
-                      // Tidak ada validator karena opsional
+                      validator: _isGoogleFlow
+                          ? (value) { // Validator jika dari Google
+                        if (value == null || value.isEmpty) {
+                          return 'Phone number is required';
+                        }
+                        return null;
+                      }
+                          : null, // Tidak ada validator jika manual & opsional
                     ),
                     const SizedBox(height: 40),
 
-                    // 4. Tombol "NEXT"
+                    // Tombol Aksi
                     ElevatedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : _register, // Disable if loading
+                      onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.active,
                         foregroundColor: Colors.white,
@@ -235,8 +277,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child:
-                      const Text('NEXT', style: TextStyle(fontSize: 16)),
+                      child: Text(buttonText, style: const TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),
@@ -266,6 +307,7 @@ class _RegisterPageState extends State<RegisterPage> {
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
+    bool enabled = true, // Tambahkan parameter enabled
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,8 +326,10 @@ class _RegisterPageState extends State<RegisterPage> {
           keyboardType: keyboardType,
           obscureText: obscureText,
           validator: validator,
+          enabled: enabled, // Terapkan di sini
           decoration: InputDecoration(
-            filled: false,
+            filled: !enabled, // Beri background abu-abu jika disabled
+            fillColor: !enabled ? Colors.grey[200] : null,
             hintText: hint,
             hintStyle: const TextStyle(color: AppColors.inactive),
             border: OutlineInputBorder(
@@ -299,6 +343,10 @@ class _RegisterPageState extends State<RegisterPage> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppColors.active, width: 2.0),
+            ),
+            disabledBorder: OutlineInputBorder( // Style untuk disabled state
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppColors.inactive.withOpacity(0.3)),
             ),
             suffixIcon: suffixIcon,
             contentPadding:

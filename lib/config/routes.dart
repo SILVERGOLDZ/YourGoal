@@ -9,6 +9,7 @@ import '/pages/notification.dart';
 import '/pages/profile_page.dart';
 import '/pages/Login&Register/login.dart';
 import '/pages/Login&Register/register.dart';
+import '/pages/email_verification_page.dart'; // Import halaman baru
 
 class AppRoutes {
   static const String login = '/login';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String mygoal = '/mygoal';
   static const String home = '/home';
   static const String profile = '/profile';
+  static const String verifyEmail = '/verify-email'; // Tambah route constant
 }
 
 // Pass the auth state stream to the router
@@ -24,6 +26,7 @@ GoRouter createRouter(Stream<User?> authStream) {
   final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
   // Define public routes (no auth required)
+  // Halaman verifikasi juga dianggap 'publik' dalam artian tidak memerlukan email terverifikasi
   final publicRoutes = [
     AppRoutes.login,
     AppRoutes.register,
@@ -35,20 +38,43 @@ GoRouter createRouter(Stream<User?> authStream) {
     // Add refreshListenable to make GoRouter react to auth state changes
     refreshListenable: GoRouterRefreshStream(authStream),
 
-    // Add redirect logic
+    // UPDATE REDIRECT LOGIC
     redirect: (BuildContext context, GoRouterState state) {
-      final bool loggedIn = FirebaseAuth.instance.currentUser != null;
+      final user = FirebaseAuth.instance.currentUser;
+      final bool loggedIn = user != null;
       final String location = state.uri.toString();
       final bool isGoingToPublicRoute = publicRoutes.contains(location);
 
-      // 1. If user is logged in and trying to access login/register, redirect to home
-      if (loggedIn && isGoingToPublicRoute) {
-        return AppRoutes.home;
+      // 1. Jika TIDAK Login & mau ke Private -> Lempar ke Login
+      if (!loggedIn && !isGoingToPublicRoute && location != AppRoutes.verifyEmail) {
+        return AppRoutes.login;
       }
 
-      // 2. If user is NOT logged in and trying to access a protected route, redirect to login
-      if (!loggedIn && !isGoingToPublicRoute) {
-        return AppRoutes.login;
+      // 2. Jika SUDAH Login
+      if (loggedIn) {
+        // Cek apakah login via email. Aturan verifikasi hanya berlaku untuk 'password' provider.
+        final bool isEmailLogin = user.providerData.any((info) => info.providerId == 'password');
+
+        if (isEmailLogin) {
+          // A. Jika belum verify DAN user tidak sedang di halaman verify -> Lempar ke Verify
+          if (!user.emailVerified && location != AppRoutes.verifyEmail) {
+            return AppRoutes.verifyEmail;
+          }
+
+          // B. Jika SUDAH verify TAPI user masih di halaman verify -> Lempar ke Home
+          if (user.emailVerified && location == AppRoutes.verifyEmail) {
+            return AppRoutes.home;
+          }
+        }
+
+        // C. Jika mau ke halaman Login/Register padahal sudah login -> Lempar ke Home
+        if (isGoingToPublicRoute) {
+          // Izinkan jika ini adalah alur Google Sign-In yang perlu melengkapi profil
+          if (state.name == 'register' && state.extra != null) {
+            return null;
+          }
+          return AppRoutes.home;
+        }
       }
 
       // 3. No redirect needed
@@ -64,7 +90,17 @@ GoRouter createRouter(Stream<User?> authStream) {
       GoRoute(
         path: AppRoutes.register,
         name: 'register',
-        builder: (context, state) => const RegisterPage(),
+        builder: (context, state) {
+          // Ambil extra data dari state dan teruskan ke RegisterPage
+          final Map<String, dynamic>? extra = state.extra as Map<String, dynamic>?;
+          return RegisterPage(extraData: extra);
+        },
+      ),
+      // TAMBAHKAN ROUTE BARU
+      GoRoute(
+        path: AppRoutes.verifyEmail,
+        name: 'verifyEmail',
+        builder: (context, state) => const EmailVerificationPage(),
       ),
       // This StatefulShellRoute is your main app (protected routes)
       StatefulShellRoute.indexedStack(
