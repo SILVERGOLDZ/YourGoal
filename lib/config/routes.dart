@@ -10,6 +10,8 @@ import '/pages/notification.dart';
 import '/pages/profile_page.dart';
 import '/pages/Login&Register/login.dart';
 import '/pages/Login&Register/register.dart';
+import '/pages/email_verification_page.dart'; // Import halaman baru
+import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
 import '/pages/Login&Register/forgot_password_page.dart';
 import '/pages/email_verification_page.dart';
 
@@ -21,6 +23,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String profile = '/profile';
   static const String verifyEmail = '/verify-email';
+  static const String newgoal = '/newgoal';
   static const String collection = '/collection';
   static const String forgotPassword = '/forgot-password';
 }
@@ -89,6 +92,11 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.verifyEmail,
         name: 'verifyEmail',
         builder: (context, state) => const EmailVerificationPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.newgoal,
+        name: 'newgoal',
+        builder: (context, state) => const NewRoadmapScreen(),
       ),
       GoRoute(
         path: AppRoutes.collection,
