@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
 
+import '../pages/collection.dart';
 import '/Widget/navigation_widget.dart';
 import '/pages/home_page.dart';
 import '/pages/mygoal_page.dart';
@@ -19,6 +20,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String profile = '/profile';
   static const String verifyEmail = '/verify-email'; // Tambah route constant
+  static const String collection = '/collection';
 }
 
 // Pass the auth state stream to the router
@@ -101,6 +103,11 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.verifyEmail,
         name: 'verifyEmail',
         builder: (context, state) => const EmailVerificationPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.collection,
+        name: 'collection',
+        builder: (context, state) => const CollectionPage(),
       ),
       // This StatefulShellRoute is your main app (protected routes)
       StatefulShellRoute.indexedStack(
