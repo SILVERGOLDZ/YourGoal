@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../config/routes.dart';
 
+//TODO: Improve navigation for desktop
 class BottomNavigationShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -159,7 +160,8 @@ class BottomNavigationShell extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: SingleChildScrollView(
+        child: Column(
         children: [
           SizedBox(height: screenHeight * 0.05),
           // App title or logo (optional)
@@ -181,33 +183,33 @@ class BottomNavigationShell extends StatelessWidget {
           _buildSidebarItem(
             context,
             0,
-            Icons.home_rounded,
+            'assets/images/Dashboard_logo.png',
             'Home',
             currentIndex,
           ),
           _buildSidebarItem(
             context,
             1,
-            Icons.grading,
+            'assets/images/My_Goal_Logo.png',
             'mygoal',
             currentIndex,
           ),
           _buildSidebarItem(
             context,
             2,
-            Icons.grading,
+            'assets/images/Notification_logo.png',
             'notifications',
             currentIndex,
           ),
           _buildSidebarItem(
             context,
             3,
-            Icons.grading,
+            'assets/images/profile_logo.png',
             'profile',
             currentIndex,
           ),
-          const Spacer(),
         ],
+      ),
       ),
     );
   }
@@ -217,7 +219,7 @@ class BottomNavigationShell extends StatelessWidget {
   Widget _buildSidebarItem(
       BuildContext context,
       int index,
-      IconData icon,
+      String image,
       String label,
       int currentIndex,
       ) {
@@ -238,10 +240,11 @@ class BottomNavigationShell extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: isActive ? Colors.white : Colors.grey.shade400,
-                  size: 24,
+                Image.asset(
+                  image,
+                  color: isActive ? Colors.blue : Colors.grey.shade600,
+                  width: 20,
+                  height: 20,
                 ),
                 const SizedBox(width: 16),
                 Text(
