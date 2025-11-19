@@ -28,7 +28,7 @@ class _MyGoalPageState extends State<MyGoalPage> {
       body: BasePage(
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _hasGoals ? _buildDashboardView() : _buildEmptyStateView(),
           ),
         ),
@@ -53,7 +53,7 @@ class _MyGoalPageState extends State<MyGoalPage> {
       children: [
         const SizedBox(height: 20),
         Text(
-          "GOOAL",
+          "YourGoal",
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w900, // Extra bold
@@ -152,6 +152,25 @@ class _MyGoalPageState extends State<MyGoalPage> {
         children: [
           const SizedBox(height: 20),
           // ... Header texts ...
+          Text(
+            "MyGoal",
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF1E89EF),
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "Keep Spirit & Never Give Up",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 24), // Added space before GoalCard
 
           // NOW USING CLEAN CUSTOM WIDGETS
           const GoalCard(
@@ -169,7 +188,15 @@ class _MyGoalPageState extends State<MyGoalPage> {
           ),
 
           const SizedBox(height: 24),
-          // ... Stats Header ...
+          const Text(
+            "My Stats",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 16),
 
           Row(
             children: const [
@@ -191,12 +218,22 @@ class _MyGoalPageState extends State<MyGoalPage> {
             ],
           ),
           const SizedBox(height: 16),
-          const StatCard(
-            label: "Days\nActive",
-            value: "14",
-            icon: Icons.bar_chart_rounded,
-            isBlue: true,
-            fullWidth: true,
+          Row(
+            children: const [
+              Expanded(
+                child: StatCard(
+                  label: "Days\nActive",
+                  value: "14",
+                  icon: Icons.bar_chart_rounded,
+                  isBlue: true, // isBlue tetap true untuk membuatnya biru
+                  // fullWidth dihapus karena sekarang diatur oleh Expanded
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(), // Widget kosong untuk mengisi sisa ruang
+              ),
+            ],
           ),
           const SizedBox(height: 80),
         ],
