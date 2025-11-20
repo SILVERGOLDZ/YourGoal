@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 
 class ScrollableTopBar extends StatelessWidget {
@@ -15,7 +16,7 @@ class ScrollableTopBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SliverAppBar(
       floating: true,
-      snap: true,
+      pinned: true,
       backgroundColor: Colors.white,
       elevation: 1,
       automaticallyImplyLeading: false,
@@ -23,7 +24,8 @@ class ScrollableTopBar extends StatelessWidget {
       leading: showBack
           ? IconButton(
         icon: const Icon(Icons.arrow_back),
-        onPressed: () => Navigator.pop(context),
+        onPressed: () => GoRouter.of(context).pop(),
+        // onPressed: () => Navigator.pop(context),
       )
           : null,
 

@@ -6,58 +6,101 @@ class HomePage extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _HomePageState();
-
 }
 
-class _HomePageState extends State<HomePage>{
+class _HomePageState extends State<HomePage> {
+  final ScrollController _scrollController = ScrollController();
+  bool _isSearchVisible = true;
+  double _lastScrollOffset = 0.0;
 
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final currentScrollOffset = _scrollController.offset;
+    final scrollDelta = currentScrollOffset - _lastScrollOffset;
+
+    // Show search when scrolling up, hide when scrolling down
+    if (scrollDelta > 0 && _isSearchVisible) {
+      // Scrolling down - hide search
+      setState(() {
+        _isSearchVisible = false;
+      });
+    } else if (scrollDelta < 0 && !_isSearchVisible) {
+      // Scrolling up - show search
+      setState(() {
+        _isSearchVisible = true;
+      });
+    }
+
+    _lastScrollOffset = currentScrollOffset;
+  }
 
   @override
   Widget build(BuildContext context) {
-
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenSize = (screenWidth < screenHeight ? screenWidth : screenHeight);
 
     return Scaffold(
       body: SafeArea(
-        // Scollable and profesional custom scroll
         child: CustomScrollView(
-          //fleksible scroll and animation
+          controller: _scrollController,
           slivers: [
             SliverAppBar(
-              pinned: true, // agar selalu di atas
-              toolbarHeight: screenHeight * 0.10,
+              pinned: true,
+              toolbarHeight: _isSearchVisible ? screenHeight * 0.10 : 0,
               backgroundColor: Colors.white,
-              title: TextField(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Color(0x80E3E3E3),
-                  hintText: 'Cari...',
-                  prefixIcon: Icon(Icons.search),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
+              flexibleSpace: AnimatedContainer(
+                duration: Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                height: _isSearchVisible ? screenHeight * 0.10 : 0,
+                child: AnimatedOpacity(
+                  duration: Duration(milliseconds: 200),
+                  opacity: _isSearchVisible ? 1.0 : 0.0,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: TextField(
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Color(0x80E3E3E3),
+                        hintText: 'Cari...',
+                        prefixIcon: Icon(Icons.search),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                          borderSide: BorderSide(color: Colors.blue),
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(30)),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                //TODO: Ubah data menjadi dynamic!
                     (context, index) => PostCard(
-                      user: 'Username',
-                      text: 'MUAHAHAHHHAHAHAHAHAHHAHAHHAHAHAHAHAHAHAHHAA',
-                      like: 20,
-                      image: 'assets/images/large_rocket_logo.png'),
+                  user: 'Username',
+                  text: 'MUAHAHAHHHAHAHAHAHAHHAHAHHAHAHAHAHAHAHAHHAA',
+                  like: 20,
+                  image: 'assets/images/large_rocket_logo.png',
+                  screenwidth: screenWidth,
+                ),
                 childCount: 5,
               ),
             ),
@@ -67,4 +110,3 @@ class _HomePageState extends State<HomePage>{
     );
   }
 }
-
