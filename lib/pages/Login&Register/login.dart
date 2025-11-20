@@ -50,6 +50,8 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userCredential == null) {
           // Show error message
+          //TODO : KALO FULL RELEASE UBAH JADI INI
+          //TODO : _showErrorSnackBar('Invalid email or password.');
           _showErrorSnackBar('Login failed. Please check your credentials.');
         }
         // No need to navigate, the router's redirect will handle it.

@@ -30,6 +30,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _isGoogleFlow = false;
 
+  // At least 8 chars, 1 uppercase, 1 number, 1 special char
+  final RegExp passwordRegex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+
   @override
   void initState() {
     super.initState();
@@ -238,9 +241,13 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (value == null || value.isEmpty) {
                                 return 'Password cannot be empty';
                               }
+                              //TODO : UBAH INI KALO UD RILIS 
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
                               }
+                              // if (!passwordRegex.hasMatch(value)) {
+                              //   return 'Must be 8+ chars, with Upper, Lower, Number & Symbol';
+                              // }
                               return null;
                             },
                           ),

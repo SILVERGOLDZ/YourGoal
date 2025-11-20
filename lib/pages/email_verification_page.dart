@@ -86,58 +86,62 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       );
     }
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.mark_email_unread_outlined, size: 100, color: AppColors.active),
-              const SizedBox(height: 30),
-              const Text(
-                'Verifikasi Email Anda',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Kami telah mengirimkan link verifikasi ke email:\n${FirebaseAuth.instance.currentUser?.email}',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 30),
-
-              // Tombol Cek Manual (User sering tidak sabar menunggu timer)
-              ElevatedButton.icon(
-                onPressed: checkEmailVerified,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Saya Sudah Verifikasi'),
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(50),
+    // Menggunakan PopScope untuk mencegah tombol kembali
+    return PopScope(
+      canPop: false, // Mencegah pengguna menekan tombol kembali
+      child: Scaffold(
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.mark_email_unread_outlined, size: 100, color: AppColors.active),
+                const SizedBox(height: 30),
+                const Text(
+                  'Verifikasi Email Anda',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Tombol Resend
-              TextButton(
-                onPressed: _isSendingVerification ? null : _sendVerificationEmail,
-                child: Text(
-                  _isSendingVerification ? 'Mengirim...' : 'Kirim Ulang Email',
-                  style: const TextStyle(color: AppColors.active),
+                const SizedBox(height: 16),
+                Text(
+                  'Kami telah mengirimkan link verifikasi ke email:\n${FirebaseAuth.instance.currentUser?.email}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
-              ),
+                const SizedBox(height: 30),
 
-              const SizedBox(height: 30),
+                // Tombol Cek Manual (User sering tidak sabar menunggu timer)
+                ElevatedButton.icon(
+                  onPressed: checkEmailVerified,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Saya Sudah Verifikasi'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(50),
+                  ),
+                ),
 
-              // Tombol Logout (Jika salah email)
-              TextButton.icon(
-                onPressed: () => _authService.signOut(),
-                icon: const Icon(Icons.logout, size: 18, color: Colors.grey),
-                label: const Text('Logout / Ganti Email', style: TextStyle(color: Colors.grey)),
-              ),
-            ],
+                const SizedBox(height: 16),
+
+                // Tombol Resend
+                TextButton(
+                  onPressed: _isSendingVerification ? null : _sendVerificationEmail,
+                  child: Text(
+                    _isSendingVerification ? 'Mengirim...' : 'Kirim Ulang Email',
+                    style: const TextStyle(color: AppColors.active),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // Tombol Logout (Jika salah email)
+                TextButton.icon(
+                  onPressed: () => _authService.signOut(),
+                  icon: const Icon(Icons.logout, size: 18, color: Colors.grey),
+                  label: const Text('Logout / Ganti Email', style: TextStyle(color: Colors.grey)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
