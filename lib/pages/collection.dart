@@ -29,7 +29,7 @@ class _CollectionState extends State<CollectionPage> {
         child: CustomScrollView(
           //fleksible scroll and animation
           slivers: [
-            ScrollableTopBar(title: "My Collection"),
+            TopBar(title: "My Collection", screenSize: screenSize),
 
             SliverList(
               delegate: SliverChildBuilderDelegate(

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class GradientButton extends StatelessWidget {
   final Widget child;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final double borderRadius;
 
   const GradientButton({
     Key? key,
     required this.child,
-    required this.onPressed,
+    this.onPressed,
     this.borderRadius = 25.0,
   }) : super(key: key);
 
