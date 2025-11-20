@@ -2,22 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 
-class ScrollableTopBar extends StatelessWidget {
+class TopBar extends StatelessWidget {
   final String title;
   final bool showBack;
+  bool? transparent;
+  final double screenSize;
+  final bool pin;
 
-  const ScrollableTopBar({
+  TopBar({
     super.key,
     required this.title,
     this.showBack = true,
+    this.transparent,
+    required this.screenSize,
+    this.pin = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
       floating: true,
-      pinned: true,
-      backgroundColor: Colors.white,
+      pinned: pin,
+      backgroundColor:
+          // Jika ingin transparent, gunakan parameter transparent
+          transparent != null && transparent == true ?
+      Colors.transparent : Colors.white,
       elevation: 1,
       automaticallyImplyLeading: false,
 
@@ -31,12 +40,13 @@ class ScrollableTopBar extends StatelessWidget {
 
       title: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: screenSize * 0.05,
           fontWeight: FontWeight.bold,
           color: Colors.black,
         ),
       ),
+      centerTitle: true,
     );
   }
 }
