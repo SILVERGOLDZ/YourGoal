@@ -41,6 +41,7 @@ class AuthService {
           'authMethod': 'email',
           'isActive': false, // Belum aktif sampai email diklik
           'createdAt': FieldValue.serverTimestamp(), // Use Server Timestamp, not client time
+          'createdAt': Timestamp.now(),
         });
 
         // BARIS signOut() DIHAPUS SESUAI INSTRUKSI
@@ -116,6 +117,7 @@ class AuthService {
     // Using SetOptions(merge: true) is safer to avoid destroying data if it exists
     await _firestore.collection('users').doc(uid).set({
       'uid': uid,
+    await _firestore.collection('users').doc(uid).set({
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
@@ -124,6 +126,8 @@ class AuthService {
       'isActive': true, // Google dianggap auto-verified
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+      'createdAt': Timestamp.now(),
+    });
   }
 
   // --- 4. SIGN OUT ---
