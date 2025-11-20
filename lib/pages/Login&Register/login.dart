@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tes/theme/colors.dart'; // Impor warna kustom
-import 'package:tes/auth_service.dart'; // Import AuthService
+import 'package:tes/theme/colors.dart'; // Pastikan import warna benar
+import 'package:tes/auth_service.dart';
 
-// LoginPage adalah StatefulWidget untuk mengelola state form
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -11,7 +10,6 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
-// Kelas State untuk LoginPage
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -29,83 +27,48 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Fungsi yang dipanggil saat tombol "Login" ditekan
+  // --- Logika Login Manual (Tetap Berfungsi) ---
   void _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // (Logika Bisnis)
       final userCredential = await _authService.signInWithEmailPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
       if (mounted) {
-        // Check if the widget is still in the tree
         setState(() {
           _isLoading = false;
         });
 
         if (userCredential == null) {
-          // Show error message
-          //TODO : KALO FULL RELEASE UBAH JADI INI
-          //TODO : _showErrorSnackBar('Invalid email or password.');
-          _showErrorSnackBar('Login failed. Please check your credentials.');
+          _showSnackBar('Login failed. Please check your email or password.', isError: true);
         }
-        // No need to navigate, the router's redirect will handle it.
+        // Jika sukses, GoRouter otomatis redirect
       }
     }
   }
 
-  // --- Navigasi untuk tombol sosial ---
-  void _googleLogin() async {
-    setState(() => _isLoading = true);
-
-    // Panggil method yang sudah dimodifikasi
-    final result = await _authService.signInWithGoogle();
-
-    if (mounted) {
-      setState(() => _isLoading = false);
-
-      if (result['status'] == 'success') {
-        // Router akan otomatis redirect ke Home karena authState berubah
-      } else if (result['status'] == 'needs_registration') {
-        // NAH INI KUNCINYA: Redirect ke Register bawa data
-        context.pushNamed(
-          'register',
-          extra: { // Kirim data via 'extra' object GoRouter
-            'isGoogle': true,
-            'email': result['email'],
-            'firstName': result['firstName'],
-            'lastName': result['lastName'],
-            'uid': result['uid'],
-          },
-        );
-      } else if (result['status'] == 'error') {
-        _showErrorSnackBar(result['message'] ?? 'Google Sign-In failed');
-      }
-    }
+  // --- Logika Dummy untuk Social Login ---
+  void _onSocialLoginPressed(String providerName) {
+    // Hanya tampilkan Snackbar
+    _showSnackBar('Fitur login dengan $providerName belum tersedia saat ini.', isError: false);
   }
 
-  // Non-functional social logins
-  void _socialLoginNotImplemented() {
-    _showErrorSnackBar('This feature is not yet implemented.');
-  }
-
-  // Fungsi untuk beralih ke halaman Register
   void _goToRegister() {
     context.goNamed('register');
   }
 
-  // Helper to show SnackBar
-  void _showErrorSnackBar(String message) {
+  // Helper untuk SnackBar (Bisa merah untuk error, default hitam/standar)
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
+        backgroundColor: isError ? Colors.red : Colors.black87,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -116,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // --- Main Content ---
+            // --- Konten Utama ---
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
@@ -126,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- Judul Halaman ---
+                      // Judul
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
@@ -162,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 40),
 
-                      // --- Form Email ---
+                      // Form Email
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -171,18 +134,14 @@ class _LoginPageState extends State<LoginPage> {
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Email tidak boleh kosong';
-                          }
-                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) {
-                            return 'Masukkan alamat email yang valid';
-                          }
+                          if (value == null || value.isEmpty) return 'Email tidak boleh kosong';
+                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) return 'Email tidak valid';
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
 
-                      // --- Form Password ---
+                      // Form Password
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -202,18 +161,14 @@ class _LoginPageState extends State<LoginPage> {
                             },
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password tidak boleh kosong';
-                          }
-                          return null;
-                        },
+                        validator: (value) =>
+                        (value == null || value.isEmpty) ? 'Password tidak boleh kosong' : null,
                       ),
                       const SizedBox(height: 30),
 
-                      // --- Tombol Login ---
+                      // Tombol Login Utama
                       ElevatedButton(
-                        onPressed: _isLoading ? null : _login, // Disable if loading
+                        onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.active,
                           foregroundColor: Colors.white,
@@ -222,76 +177,66 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child:
-                        const Text('Login', style: TextStyle(fontSize: 16)),
+                        child: const Text('Login', style: TextStyle(fontSize: 16)),
                       ),
                       const SizedBox(height: 30),
 
-                      // --- Pemisah "Or" ---
+                      // --- Divider "Or" ---
                       Row(
                         children: [
-                          Expanded(
-                              child: Divider(
-                                  color: AppColors.inactive.withOpacity(0.5))),
+                          Expanded(child: Divider(color: AppColors.inactive.withOpacity(0.5))),
                           Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 16.0),
-                            child: Text(
-                              'Or',
-                              style: TextStyle(color: AppColors.inactive),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Text('Or', style: TextStyle(color: AppColors.inactive)),
                           ),
-                          Expanded(
-                              child: Divider(
-                                  color: AppColors.inactive.withOpacity(0.5))),
+                          Expanded(child: Divider(color: AppColors.inactive.withOpacity(0.5))),
                         ],
                       ),
                       const SizedBox(height: 30),
 
-                      // --- Tombol Social Login ---
+                      // --- Tombol Social Login (DUMMY) ---
                       _buildSocialLoginButton(
-                        onPressed: _isLoading
-                            ? () {}
-                            : _socialLoginNotImplemented, // Non-functional
+                        onPressed: () => _onSocialLoginPressed('Apple'),
                         icon: Icons.apple,
                         label: 'Continue with Apple',
                         iconColor: Colors.black,
                       ),
                       const SizedBox(height: 16),
                       _buildSocialLoginButton(
-                        onPressed:
-                        _isLoading ? () {} : _googleLogin, // Functional
+                        onPressed: () => _onSocialLoginPressed('Google'),
+                        // Menggunakan fallback Icon jika aset gambar belum siap
                         iconWidget: Image.asset(
                           'assets/images/google_icon.png',
-                          height: 28.0,
-                          width: 28.0,
+                          height: 24.0,
+                          width: 24.0,
                           errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.g_mobiledata,
-                                color: AppColors.active, size: 28.0);
+                            return const Icon(Icons.g_mobiledata, color: Colors.red, size: 28);
                           },
                         ),
                         label: 'Continue with Google',
                       ),
                       const SizedBox(height: 16),
                       _buildSocialLoginButton(
-                        onPressed: _isLoading
-                            ? () {}
-                            : _socialLoginNotImplemented, // Non-functional
+                        onPressed: () => _onSocialLoginPressed('Facebook'),
                         icon: Icons.facebook,
                         label: 'Continue with Facebook',
                         iconColor: const Color(0xFF1877F2),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 20),
 
-                      // --- Link ke Register ---
+                      // Link ke Register
                       TextButton(
                         onPressed: _isLoading ? null : _goToRegister,
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Text("Don't have an account? ", style: TextStyle(color: Colors.grey)),
                             Text(
-                              'Create an Account',
-                              style: TextStyle(color: Colors.black),
+                              'Create Account',
+                              style: TextStyle(
+                                color: AppColors.active,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -302,13 +247,11 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            // --- Loading Overlay ---
+            // Loading Overlay
             if (_isLoading)
               Container(
                 color: Colors.black.withOpacity(0.5),
-                child: const Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: const Center(child: CircularProgressIndicator()),
               ),
           ],
         ),
@@ -316,7 +259,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Widget Kustom untuk Tombol Social Login
+  // Widget Tombol Social Login
   Widget _buildSocialLoginButton({
     required VoidCallback onPressed,
     required String label,
@@ -325,18 +268,12 @@ class _LoginPageState extends State<LoginPage> {
     Color? iconColor,
   }) {
     return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: iconWidget ??
-          Icon(
-            icon,
-            color: iconColor ??
-                Theme.of(context).textTheme.bodyLarge?.color,
-            size: 28.0,
-          ),
+      onPressed: _isLoading ? null : onPressed,
+      icon: iconWidget ?? Icon(icon, color: iconColor ?? Colors.black, size: 24.0),
       label: Text(
         label,
-        style: TextStyle(
-          color: Theme.of(context).textTheme.bodyLarge?.color,
+        style: const TextStyle(
+          color: Colors.black87,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -346,6 +283,8 @@ class _LoginPageState extends State<LoginPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
+        // Agar tombol tetap terlihat aktif (clickable) meskipun hanya dummy
+        foregroundColor: Colors.grey,
       ),
     );
   }

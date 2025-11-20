@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../pages/collection.dart';
 import '/Widget/navigation_widget.dart';
@@ -10,7 +10,7 @@ import '/pages/notification.dart';
 import '/pages/profile_page.dart';
 import '/pages/Login&Register/login.dart';
 import '/pages/Login&Register/register.dart';
-import '/pages/email_verification_page.dart'; // Import halaman baru
+import '/pages/email_verification_page.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -19,16 +19,13 @@ class AppRoutes {
   static const String mygoal = '/mygoal';
   static const String home = '/home';
   static const String profile = '/profile';
-  static const String verifyEmail = '/verify-email'; // Tambah route constant
+  static const String verifyEmail = '/verify-email';
   static const String collection = '/collection';
 }
 
-// Pass the auth state stream to the router
 GoRouter createRouter(Stream<User?> authStream) {
   final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
-  // Define public routes (no auth required)
-  // Halaman verifikasi juga dianggap 'publik' dalam artian tidak memerlukan email terverifikasi
   final publicRoutes = [
     AppRoutes.login,
     AppRoutes.register,
@@ -37,7 +34,6 @@ GoRouter createRouter(Stream<User?> authStream) {
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.login,
-    // Add refreshListenable to make GoRouter react to auth state changes
     refreshListenable: GoRouterRefreshStream(authStream),
 
     // UPDATE REDIRECT LOGIC
@@ -54,32 +50,21 @@ GoRouter createRouter(Stream<User?> authStream) {
 
       // 2. Jika SUDAH Login
       if (loggedIn) {
-        // Cek apakah login via email. Aturan verifikasi hanya berlaku untuk 'password' provider.
-        final bool isEmailLogin = user.providerData.any((info) => info.providerId == 'password');
-
-        if (isEmailLogin) {
-          // A. Jika belum verify DAN user tidak sedang di halaman verify -> Lempar ke Verify
-          if (!user.emailVerified && location != AppRoutes.verifyEmail) {
-            return AppRoutes.verifyEmail;
-          }
-
-          // B. Jika SUDAH verify TAPI user masih di halaman verify -> Lempar ke Home
-          if (user.emailVerified && location == AppRoutes.verifyEmail) {
-            return AppRoutes.home;
-          }
+        // Email Verification Logic
+        if (!user.emailVerified && location != AppRoutes.verifyEmail) {
+          return AppRoutes.verifyEmail;
         }
 
-        // C. Jika mau ke halaman Login/Register padahal sudah login -> Lempar ke Home
+        if (user.emailVerified && location == AppRoutes.verifyEmail) {
+          return AppRoutes.home;
+        }
+
+        // Jika mau ke halaman Login/Register padahal sudah login -> Lempar ke Home
         if (isGoingToPublicRoute) {
-          // Izinkan jika ini adalah alur Google Sign-In yang perlu melengkapi profil
-          if (state.name == 'register' && state.extra != null) {
-            return null;
-          }
           return AppRoutes.home;
         }
       }
 
-      // 3. No redirect needed
       return null;
     },
 
@@ -93,12 +78,10 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.register,
         name: 'register',
         builder: (context, state) {
-          // Ambil extra data dari state dan teruskan ke RegisterPage
-          final Map<String, dynamic>? extra = state.extra as Map<String, dynamic>?;
-          return RegisterPage(extraData: extra);
+          // Tidak ada extra data lagi
+          return const RegisterPage();
         },
       ),
-      // TAMBAHKAN ROUTE BARU
       GoRoute(
         path: AppRoutes.verifyEmail,
         name: 'verifyEmail',
@@ -109,7 +92,6 @@ GoRouter createRouter(Stream<User?> authStream) {
         name: 'collection',
         builder: (context, state) => const CollectionPage(),
       ),
-      // This StatefulShellRoute is your main app (protected routes)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return BottomNavigationShell(navigationShell: navigationShell);
@@ -156,30 +138,12 @@ GoRouter createRouter(Stream<User?> authStream) {
     ],
     errorBuilder: (context, state) => Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              '404 - Page Not Found',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text('Path: ${state.uri.path}'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => context.go(AppRoutes.home),
-              child: const Text('Go Home'),
-            ),
-          ],
-        ),
+        child: Text('Page Not Found: ${state.uri.path}'),
       ),
     ),
   );
 }
 
-// Helper class to bridge the Stream to a Listenable for GoRouter
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();

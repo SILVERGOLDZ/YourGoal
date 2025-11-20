@@ -1,17 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/material.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance; // Cukup inisialisasi sekali
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
-  // --- 1. REGISTER MANUAL (Dengan Verifikasi Email) ---
+  // --- REGISTER MANUAL (Dengan Verifikasi Email) ---
   Future<String?> registerWithEmailPassword(
       String email,
       String password,
@@ -31,112 +29,27 @@ class AuthService {
         // 2. Kirim Email Verifikasi
         await user.sendEmailVerification();
 
-        // 3. Simpan ke Firestore dengan status isActive = false
-        // -- PERBAIKAN: Menghapus duplikasi field 'createdAt' --
+        // 3. Simpan ke Firestore
         await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid, // IMPORTANT for Security Rules
+          'uid': user.uid,
           'firstName': firstName,
           'lastName': lastName,
           'email': email,
           'phone': phone ?? '',
-          'authMethod': 'email',
+          'authMethod': 'email', // Hardcode ke email
           'isActive': false, // Belum aktif sampai email diklik
-          'createdAt': FieldValue.serverTimestamp(), // Gunakan timestamp server
+          'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // BARIS signOut() DIHAPUS SESUAI INSTRUKSI
-        // Dengan ini, user akan tetap login dan redirect-lah yang akan menangani
-        // apakah user bisa masuk ke home atau harus ke halaman verifikasi.
-
-        return null; // Sukses (return null artinya tidak ada error string)
+        return null; // Sukses
       }
       return "User creation failed";
     } on FirebaseAuthException catch (e) {
-      return e.message; // Return error message
+      return e.message;
     }
   }
 
-  // --- 2. LOGIN GOOGLE (Dengan Logic Redirect ke Form) ---
-  Future<Map<String, dynamic>> signInWithGoogle() async {
-    try {
-      // -- PERBAIKAN: Menghapus `_googleSignIn.initialize()` yang berulang --
-      // Cukup panggil `authenticate()` atau `signIn()`
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
-
-      if (googleUser == null) return {'status': 'cancelled'};
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: null, // Sebaiknya sertakan accessToken
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in ke Firebase
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        // CEK FIRESTORE: Apakah user ini sudah punya data lengkap?
-        final userDoc = await _firestore.collection('users').doc(user.uid).get();
-
-        if (userDoc.exists) {
-          // Kasus A: User Lama -> Langsung Masuk
-          return {'status': 'success', 'user': user};
-        } else {
-          // Kasus B: User Baru (Database belum ada)
-          String firstName = googleUser.displayName?.split(' ').first ?? '';
-          String lastName = '';
-          if ((googleUser.displayName?.split(' ').length ?? 0) > 1) {
-            lastName = googleUser.displayName!.substring(firstName.length).trim();
-          }
-
-          return {
-            'status': 'needs_registration',
-            'email': user.email,
-            'firstName': firstName,
-            'lastName': lastName,
-            'uid': user.uid,
-          };
-        }
-      }
-      return {'status': 'error', 'message': 'Authentication failed'};
-    } catch (e) {
-      debugPrint(e.toString());
-      return {'status': 'error', 'message': e.toString()};
-    }
-  }
-
-  // --- 3. FINALIZE GOOGLE REGISTRATION ---
-  Future<void> completeGoogleRegistration({
-    required String uid,
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String phone,
-  }) async {
-    // -- PERBAIKAN: Menghapus duplikasi kode dan menggunakan SetOptions(merge: true) --
-    // Ini lebih aman untuk menghindari penimpaan data yang tidak disengaja.
-    await _firestore.collection('users').doc(uid).set({
-      'uid': uid,
-      'firstName': firstName,
-      'lastName': lastName,
-      'email': email,
-      'phone': phone,
-      'authMethod': 'google',
-      'isActive': true, // Google dianggap auto-verified
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
-
-  // --- 4. SIGN OUT ---
-  Future<void> signOut() async {
-    // -- PERBAIKAN: Gunakan signOut dari googleSignIn, bukan disconnect --
-    // Disconnect mencabut izin aplikasi, sedangkan signOut hanya mengeluarkan user.
-    await _googleSignIn.signOut().catchError((e) => debugPrint("Google signOut error: $e"));
-    await _auth.signOut();
-  }
-
-  // --- Metode yang sudah ada sebelumnya (Tidak ada perubahan di sini) ---
+  // --- LOGIN MANUAL ---
   Future<UserCredential?> signInWithEmailPassword(
       String email, String password) async {
     try {
@@ -151,6 +64,7 @@ class AuthService {
     }
   }
 
+  // --- UPDATE DATA ---
   Future<bool> updateUserData(Map<String, dynamic> data) async {
     try {
       User? user = _auth.currentUser;
@@ -165,24 +79,28 @@ class AuthService {
     }
   }
 
+  // --- DELETE ACCOUNT ---
   Future<bool> deleteUserAccount() async {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        // Hapus dari Firestore dulu
         await _firestore.collection('users').doc(user.uid).delete();
-        // Kemudian hapus dari Firebase Auth
         await user.delete();
         return true;
       }
       return false;
     } on FirebaseAuthException catch (e) {
       debugPrint("Error deleting account: ${e.code}");
-      // Re-authentication might be required
       return false;
     } catch (e) {
       debugPrint("General error deleting account: $e");
       return false;
     }
+  }
+
+  // --- SIGN OUT ---
+  Future<void> signOut() async {
+    // Cukup sign out dari Firebase saja
+    await _auth.signOut();
   }
 }
