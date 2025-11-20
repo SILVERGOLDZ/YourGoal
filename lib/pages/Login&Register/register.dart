@@ -56,85 +56,59 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  // Fungsi yang dipanggil saat tombol "NEXT" ditekan
+  // Fungsi yang dipanggil saat tombol "NEXT" atau "COMPLETE" ditekan
   void _register() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
+    // Validasi form terlebih dahulu
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-      if (_isGoogleFlow) {
-        // FLOW A: SAVE DATA GOOGLE
-        await _authService.completeGoogleRegistration(
-          uid: widget.extraData!['uid'],
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
-        // Karena Auth state sudah login dari proses Google sebelumnya,
-        // User akan otomatis ter-redirect ke Home oleh Router setelah data tersimpan.
-        // Tidak perlu navigasi eksplisit di sini jika router sudah diatur.
+    setState(() => _isLoading = true);
 
-      } else {
-        // FLOW B: REGISTER MANUAL (Kirim Email Verifikasi)
-        String? error = await _authService.registerWithEmailPassword(
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-          _firstNameController.text.trim(),
-          _lastNameController.text.trim(),
-          _phoneController.text.trim(),
-        );
+    if (_isGoogleFlow) {
+      // FLOW A: MENYELESAIKAN REGISTRASI GOOGLE
+      await _authService.completeGoogleRegistration(
+        uid: widget.extraData!['uid'],
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+      );
+      // Karena Auth state sudah login dari proses Google sebelumnya,
+      // dan email sudah terverifikasi, user akan otomatis ter-redirect
+      // ke halaman utama oleh GoRouter.
+      // Tidak perlu navigasi eksplisit di sini.
 
-        if (error == null) {
-          // SUKSES
-          if (mounted) {
-            // HAPUS INI: context.goNamed('login');
-            // Router akan otomatis mendeteksi user login (karena signOut dihapus)
-            // dan redirect ke '/verify-email' karena emailVerified masih false.
+    } else {
+      // FLOW B: REGISTRASI MANUAL DENGAN EMAIL & PASSWORD
+      String? error = await _authService.registerWithEmailPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _firstNameController.text.trim(),
+        _lastNameController.text.trim(),
+        _phoneController.text.trim(),
+      );
 
-
-      if (_isGoogleFlow) {
-        // FLOW A: SAVE DATA GOOGLE
-        await _authService.completeGoogleRegistration(
-          uid: widget.extraData!['uid'],
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
-        );
-        // Karena Auth state sudah login dari proses Google sebelumnya,
-        // User akan otomatis ter-redirect ke Home oleh Router setelah data tersimpan.
-        // Tidak perlu navigasi eksplisit di sini jika router sudah diatur.
-
-      } else {
-        // FLOW B: REGISTER MANUAL (Kirim Email Verifikasi)
-        String? error = await _authService.registerWithEmailPassword(
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-          _firstNameController.text.trim(),
-          _lastNameController.text.trim(),
-          _phoneController.text.trim(),
-        );
-
-        if (error == null) {
-          // SUKSES
-          if (mounted) {
-            // HAPUS INI: context.goNamed('login');
-            // Router akan otomatis mendeteksi user login (karena signOut dihapus)
-            // dan redirect ke '/verify-email' karena emailVerified masih false.
-
-            // Cukup tampilkan pesan saja:
-            _showSuccessSnackBar('Akun dibuat. Silakan verifikasi email Anda.');
-          }
-        } else {
-          if (mounted) _showErrorSnackBar(error);
+      if (error == null) {
+        // SUKSES: Akun dibuat dan email verifikasi terkirim.
+        if (mounted) {
+          // GoRouter akan otomatis mendeteksi user baru yang belum terverifikasi
+          // dan mengarahkannya ke halaman '/verify-email'.
+          _showSuccessSnackBar('Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
         }
+      } else {
+        // GAGAL: Tampilkan pesan error.
+        if (mounted) _showErrorSnackBar(error);
       }
+    }
 
-      if (mounted) setState(() => _isLoading = false);
+    // Pastikan loading indicator dihentikan setelah semua proses selesai.
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
-  // Helper to show SnackBar
+  // Helper untuk menampilkan SnackBar error
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -145,6 +119,7 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // Helper untuk menampilkan SnackBar sukses
   void _showSuccessSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -272,16 +247,13 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (value == null || value.isEmpty) {
                                 return 'Password cannot be empty';
                               }
-                              //TODO : UBAH INI KALO UD RILIS 
+                              //TODO : UBAH INI KALO UD RILIS
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
                               }
                               // if (!passwordRegex.hasMatch(value)) {
                               //   return 'Must be 8+ chars, with Upper, Lower, Number & Symbol';
                               // }
-                              if (value.length < 6) {
-                                return 'Password must be at least 6 characters';
-                              }
                               return null;
                             },
                           ),

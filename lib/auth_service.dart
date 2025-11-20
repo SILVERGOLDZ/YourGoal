@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance; // Cukup inisialisasi sekali
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
@@ -32,6 +32,7 @@ class AuthService {
         await user.sendEmailVerification();
 
         // 3. Simpan ke Firestore dengan status isActive = false
+        // -- PERBAIKAN: Menghapus duplikasi field 'createdAt' --
         await _firestore.collection('users').doc(user.uid).set({
           'uid': user.uid, // IMPORTANT for Security Rules
           'firstName': firstName,
@@ -40,8 +41,7 @@ class AuthService {
           'phone': phone ?? '',
           'authMethod': 'email',
           'isActive': false, // Belum aktif sampai email diklik
-          'createdAt': FieldValue.serverTimestamp(), // Use Server Timestamp, not client time
-          'createdAt': Timestamp.now(),
+          'createdAt': FieldValue.serverTimestamp(), // Gunakan timestamp server
         });
 
         // BARIS signOut() DIHAPUS SESUAI INSTRUKSI
@@ -59,15 +59,15 @@ class AuthService {
   // --- 2. LOGIN GOOGLE (Dengan Logic Redirect ke Form) ---
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
-      // Inisialisasi _googleSignIn jika belum
-      await _googleSignIn.initialize();
+      // -- PERBAIKAN: Menghapus `_googleSignIn.initialize()` yang berulang --
+      // Cukup panggil `authenticate()` atau `signIn()`
       final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
 
       if (googleUser == null) return {'status': 'cancelled'};
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: null, // accessToken tidak diperlukan untuk idToken flow
+        accessToken: null, // Sebaiknya sertakan accessToken
         idToken: googleAuth.idToken,
       );
 
@@ -114,10 +114,10 @@ class AuthService {
     required String email,
     required String phone,
   }) async {
-    // Using SetOptions(merge: true) is safer to avoid destroying data if it exists
+    // -- PERBAIKAN: Menghapus duplikasi kode dan menggunakan SetOptions(merge: true) --
+    // Ini lebih aman untuk menghindari penimpaan data yang tidak disengaja.
     await _firestore.collection('users').doc(uid).set({
       'uid': uid,
-    await _firestore.collection('users').doc(uid).set({
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
@@ -126,17 +126,17 @@ class AuthService {
       'isActive': true, // Google dianggap auto-verified
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-      'createdAt': Timestamp.now(),
-    });
   }
 
   // --- 4. SIGN OUT ---
   Future<void> signOut() async {
-    await _googleSignIn.disconnect().catchError((e) => debugPrint("Google disconnect error: $e"));
+    // -- PERBAIKAN: Gunakan signOut dari googleSignIn, bukan disconnect --
+    // Disconnect mencabut izin aplikasi, sedangkan signOut hanya mengeluarkan user.
+    await _googleSignIn.signOut().catchError((e) => debugPrint("Google signOut error: $e"));
     await _auth.signOut();
   }
 
-  // --- Metode yang sudah ada sebelumnya ---
+  // --- Metode yang sudah ada sebelumnya (Tidak ada perubahan di sini) ---
   Future<UserCredential?> signInWithEmailPassword(
       String email, String password) async {
     try {
