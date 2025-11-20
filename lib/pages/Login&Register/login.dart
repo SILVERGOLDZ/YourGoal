@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tes/theme/colors.dart'; // Pastikan import warna benar
+import 'package:tes/theme/colors.dart'; // Ensure the color import is correct
 import 'package:tes/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // --- Logika Login Manual (Tetap Berfungsi) ---
+  // --- Manual Login Logic (Still Functional) ---
   void _login() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -47,22 +47,22 @@ class _LoginPageState extends State<LoginPage> {
         if (userCredential == null) {
           _showSnackBar('Login failed. Please check your email or password.', isError: true);
         }
-        // Jika sukses, GoRouter otomatis redirect
+        // If successful, GoRouter will automatically redirect
       }
     }
   }
 
-  // --- Logika Dummy untuk Social Login ---
+  // --- Dummy Logic for Social Login ---
   void _onSocialLoginPressed(String providerName) {
-    // Hanya tampilkan Snackbar
-    _showSnackBar('Fitur login dengan $providerName belum tersedia saat ini.', isError: false);
+    // Just show a Snackbar
+    _showSnackBar('Login with $providerName is not yet available.', isError: false);
   }
 
   void _goToRegister() {
     context.goNamed('register');
   }
 
-  // Helper untuk SnackBar (Bisa merah untuk error, default hitam/standar)
+  // Helper for SnackBar (Can be red for error, default is standard black)
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
       body: SafeArea(
         child: Stack(
           children: [
-            // --- Konten Utama ---
+            // --- Main Content ---
             Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
@@ -89,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Judul
+                      // Title
                       RichText(
                         textAlign: TextAlign.center,
                         text: TextSpan(
@@ -117,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Login untuk melanjutkan',
+                        'Login to continue', // DIUBAH
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppColors.inactive,
@@ -125,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 40),
 
-                      // Form Email
+                      // Email Form
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -134,14 +134,14 @@ class _LoginPageState extends State<LoginPage> {
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Email tidak boleh kosong';
-                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) return 'Email tidak valid';
+                          if (value == null || value.isEmpty) return 'Email cannot be empty'; // DIUBAH
+                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) return 'Please enter a valid email'; // DIUBAH
                           return null;
                         },
                       ),
                       const SizedBox(height: 20),
 
-                      // Form Password
+                      // Password Form
                       TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
@@ -162,11 +162,30 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Password tidak boleh kosong' : null,
+                        (value == null || value.isEmpty) ? 'Password cannot be empty' : null, // DIUBAH
                       ),
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 10), // Give a little space
 
-                      // Tombol Login Utama
+                      // Forgot Password Button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            context.pushNamed('forgotPassword'); // Navigate to the forgot password page
+                          },
+                          child: const Text(
+                            'Forgot Password?', // DIUBAH
+                            style: TextStyle(
+                              color: AppColors.active,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20), // Space before the Login button
+
+                      // Main Login Button
                       ElevatedButton(
                         onPressed: _isLoading ? null : _login,
                         style: ElevatedButton.styleFrom(
@@ -181,7 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 30),
 
-                      // --- Divider "Or" ---
+                      // --- "Or" Divider ---
                       Row(
                         children: [
                           Expanded(child: Divider(color: AppColors.inactive.withOpacity(0.5))),
@@ -194,7 +213,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 30),
 
-                      // --- Tombol Social Login (DUMMY) ---
+                      // --- Social Login Buttons (DUMMY) ---
                       _buildSocialLoginButton(
                         onPressed: () => _onSocialLoginPressed('Apple'),
                         icon: Icons.apple,
@@ -204,7 +223,7 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 16),
                       _buildSocialLoginButton(
                         onPressed: () => _onSocialLoginPressed('Google'),
-                        // Menggunakan fallback Icon jika aset gambar belum siap
+                        // Using a fallback Icon if the image asset is not ready
                         iconWidget: Image.asset(
                           'assets/images/google_icon.png',
                           height: 24.0,
@@ -224,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Link ke Register
+                      // Link to Register
                       TextButton(
                         onPressed: _isLoading ? null : _goToRegister,
                         child: const Row(
@@ -259,7 +278,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Widget Tombol Social Login
+  // Social Login Button Widget
   Widget _buildSocialLoginButton({
     required VoidCallback onPressed,
     required String label,
@@ -283,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
-        // Agar tombol tetap terlihat aktif (clickable) meskipun hanya dummy
+        // To keep the button looking active (clickable) even though it's a dummy
         foregroundColor: Colors.grey,
       ),
     );

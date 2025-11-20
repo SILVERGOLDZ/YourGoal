@@ -103,4 +103,13 @@ class AuthService {
     // Cukup sign out dari Firebase saja
     await _auth.signOut();
   }
+
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return null; // Null artinya sukses (tidak ada error)
+    } on FirebaseAuthException catch (e) {
+      return e.message; // Kembalikan pesan error jika gagal
+    }
+  }
 }

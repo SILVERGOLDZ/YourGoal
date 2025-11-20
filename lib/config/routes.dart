@@ -10,6 +10,7 @@ import '/pages/notification.dart';
 import '/pages/profile_page.dart';
 import '/pages/Login&Register/login.dart';
 import '/pages/Login&Register/register.dart';
+import '/pages/Login&Register/forgot_password_page.dart';
 import '/pages/email_verification_page.dart';
 
 class AppRoutes {
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String verifyEmail = '/verify-email';
   static const String collection = '/collection';
+  static const String forgotPassword = '/forgot-password';
 }
 
 GoRouter createRouter(Stream<User?> authStream) {
@@ -29,6 +31,7 @@ GoRouter createRouter(Stream<User?> authStream) {
   final publicRoutes = [
     AppRoutes.login,
     AppRoutes.register,
+    AppRoutes.forgotPassword,
   ];
 
   return GoRouter(
@@ -91,6 +94,11 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.collection,
         name: 'collection',
         builder: (context, state) => const CollectionPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => const ForgotPasswordPage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
