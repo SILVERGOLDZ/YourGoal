@@ -22,7 +22,7 @@ class BottomNavigationShell extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final currentIndex = navigationShell.currentIndex;
-    final bool isMobile = screenWidth < 600;
+    final bool isMobile = screenWidth < 768;
 
     return PopScope(
       canPop: false,

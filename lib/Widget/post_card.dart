@@ -12,6 +12,7 @@ class PostCard extends StatelessWidget{
   final String text;
   final int like;
   final String? image;
+  final double screenwidth;
 
   PostCard({
     super.key,
@@ -21,10 +22,15 @@ class PostCard extends StatelessWidget{
     required this.text,
     required this.like,
     this.image,
+    required this.screenwidth
   });
 
   @override
   Widget build(BuildContext context){
+
+    bool isMobile = false;
+    screenwidth < 768 ? isMobile = true : isMobile = false;
+
     return Card.filled(
       color: Color(0xFFFFFFFF),
       // elevation: 2,
@@ -61,8 +67,19 @@ class PostCard extends StatelessWidget{
             SizedBox(height: 30),
 
             // cek image ada diupload di posting atau tidak
-            if (image != null)...[
+            if (image != null &&  isMobile)...[
               Image.asset(image!, width: double.infinity,),
+              SizedBox(height: 30),
+            ]
+              else if (!isMobile)...[
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 70),
+                  child: Image.asset(image!),
+                // SizedBox(
+                //   width: screenwidth * 0.5,
+                //   child: Image.asset(image!, width: screenwidth * 0.5),
+                // ),
+                ),
               SizedBox(height: 30),
             ]
             else
