@@ -30,6 +30,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _isGoogleFlow = false;
 
+  // At least 8 chars, 1 uppercase, 1 number, 1 special char
+  final RegExp passwordRegex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +60,37 @@ class _RegisterPageState extends State<RegisterPage> {
   void _register() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+
+      if (_isGoogleFlow) {
+        // FLOW A: SAVE DATA GOOGLE
+        await _authService.completeGoogleRegistration(
+          uid: widget.extraData!['uid'],
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+        );
+        // Karena Auth state sudah login dari proses Google sebelumnya,
+        // User akan otomatis ter-redirect ke Home oleh Router setelah data tersimpan.
+        // Tidak perlu navigasi eksplisit di sini jika router sudah diatur.
+
+      } else {
+        // FLOW B: REGISTER MANUAL (Kirim Email Verifikasi)
+        String? error = await _authService.registerWithEmailPassword(
+          _emailController.text.trim(),
+          _passwordController.text.trim(),
+          _firstNameController.text.trim(),
+          _lastNameController.text.trim(),
+          _phoneController.text.trim(),
+        );
+
+        if (error == null) {
+          // SUKSES
+          if (mounted) {
+            // HAPUS INI: context.goNamed('login');
+            // Router akan otomatis mendeteksi user login (karena signOut dihapus)
+            // dan redirect ke '/verify-email' karena emailVerified masih false.
+
 
       if (_isGoogleFlow) {
         // FLOW A: SAVE DATA GOOGLE
@@ -238,6 +272,13 @@ class _RegisterPageState extends State<RegisterPage> {
                               if (value == null || value.isEmpty) {
                                 return 'Password cannot be empty';
                               }
+                              //TODO : UBAH INI KALO UD RILIS 
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              // if (!passwordRegex.hasMatch(value)) {
+                              //   return 'Must be 8+ chars, with Upper, Lower, Number & Symbol';
+                              // }
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
                               }

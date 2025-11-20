@@ -33,12 +33,14 @@ class AuthService {
 
         // 3. Simpan ke Firestore dengan status isActive = false
         await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid, // IMPORTANT for Security Rules
           'firstName': firstName,
           'lastName': lastName,
           'email': email,
           'phone': phone ?? '',
           'authMethod': 'email',
           'isActive': false, // Belum aktif sampai email diklik
+          'createdAt': FieldValue.serverTimestamp(), // Use Server Timestamp, not client time
           'createdAt': Timestamp.now(),
         });
 
@@ -57,6 +59,7 @@ class AuthService {
   // --- 2. LOGIN GOOGLE (Dengan Logic Redirect ke Form) ---
   Future<Map<String, dynamic>> signInWithGoogle() async {
     try {
+      // Inisialisasi _googleSignIn jika belum
       await _googleSignIn.initialize();
       final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
 
@@ -64,7 +67,7 @@ class AuthService {
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: null,
+        accessToken: null, // accessToken tidak diperlukan untuk idToken flow
         idToken: googleAuth.idToken,
       );
 
@@ -111,6 +114,9 @@ class AuthService {
     required String email,
     required String phone,
   }) async {
+    // Using SetOptions(merge: true) is safer to avoid destroying data if it exists
+    await _firestore.collection('users').doc(uid).set({
+      'uid': uid,
     await _firestore.collection('users').doc(uid).set({
       'firstName': firstName,
       'lastName': lastName,
@@ -118,6 +124,8 @@ class AuthService {
       'phone': phone,
       'authMethod': 'google',
       'isActive': true, // Google dianggap auto-verified
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
       'createdAt': Timestamp.now(),
     });
   }
@@ -170,6 +178,7 @@ class AuthService {
       return false;
     } on FirebaseAuthException catch (e) {
       debugPrint("Error deleting account: ${e.code}");
+      // Re-authentication might be required
       return false;
     } catch (e) {
       debugPrint("General error deleting account: $e");
