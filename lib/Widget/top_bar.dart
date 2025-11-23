@@ -4,24 +4,34 @@ import 'package:go_router/go_router.dart';
 
 class TopBar extends StatelessWidget {
   final String title;
-  final bool showBack;
-  bool? transparent;
   final double screenSize;
-  final bool pin;
+
+  bool? transparent; //nullable, Optional
+
+  final bool pin; //optional
+  final bool floating; //optional
+  final bool showBack; //optional
 
   TopBar({
     super.key,
     required this.title,
+    required this.screenSize,
+
     this.showBack = true,
     this.transparent,
-    required this.screenSize,
     this.pin = true,
+    this.floating = true,
   });
+
+  // Cara pakai:
+  // TopBar(title: "Profile", showBack: false, transparent: true, screenSize: screenSize, pin: false, floating: false),
+  // Penjelasan: Jika pin / floating tidak didefinisikan kedalam func call, otomatis true
+  // Jika ingin pin / floating tidak true, beri nilai didalam function call
 
   @override
   Widget build(BuildContext context) {
     return SliverAppBar(
-      floating: true,
+      floating: floating,
       pinned: pin,
       backgroundColor:
           // Jika ingin transparent, gunakan parameter transparent
