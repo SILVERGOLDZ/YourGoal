@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tes/auth_service.dart';
+import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:tes/utils/snackbar_helper.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tes/config/routes.dart';
 import 'package:tes/theme/app_theme.dart';
-import 'package:tes/auth_service.dart'; // Import AuthService
+import 'package:tes/services/auth/auth_service.dart'; // Import AuthService
 
 //firebase
 import 'package:firebase_core/firebase_core.dart';

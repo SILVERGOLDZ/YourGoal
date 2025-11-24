@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:tes/Widget/top_bar.dart';
-import 'package:tes/auth_service.dart';
+import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/config/routes.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:tes/Widget/base_page.dart';
