@@ -8,6 +8,7 @@ class TopBar extends StatelessWidget {
   bool? transparent;
   final double screenSize;
   final bool pin;
+  final List<Widget>? actions;
 
   TopBar({
     super.key,
@@ -16,6 +17,7 @@ class TopBar extends StatelessWidget {
     this.transparent,
     required this.screenSize,
     this.pin = true,
+    this.actions,
   });
 
   @override
@@ -47,6 +49,7 @@ class TopBar extends StatelessWidget {
         ),
       ),
       centerTitle: true,
+      actions: actions,
     );
   }
 }
