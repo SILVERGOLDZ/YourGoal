@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tes/auth_service.dart';
+import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart'; // Adjust the color import path
 import 'package:tes/utils/snackbar_helper.dart';
 

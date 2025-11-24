@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // Diperlukan untuk navigasi
-import 'package:tes/auth_service.dart';
+import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart'; // Sesuaikan path import warna Anda
 import 'package:tes/utils/snackbar_helper.dart';
 

@@ -22,7 +22,6 @@ class TopBar extends StatelessWidget {
     this.transparent,
     this.pin = true,
     this.actions,
-    this.actions,
     this.floating = true,
   });
 
