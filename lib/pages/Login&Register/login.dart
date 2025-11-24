@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/theme/colors.dart'; // Ensure the color import is correct
 import 'package:tes/auth_service.dart';
+import 'package:tes/utils/snackbar_helper.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
         });
 
         if (userCredential == null) {
-          _showSnackBar('Login failed. Please check your email or password.', isError: true);
+          showSnackBar(context, 'Login failed. Please check your email or password.', isError: true);
         }
         // If successful, GoRouter will automatically redirect
       }
@@ -55,22 +56,11 @@ class _LoginPageState extends State<LoginPage> {
   // --- Dummy Logic for Social Login ---
   void _onSocialLoginPressed(String providerName) {
     // Just show a Snackbar
-    _showSnackBar('Login with $providerName is not yet available.', isError: false);
+    showSnackBar(context, 'Login with $providerName is not yet available.', isError: false);
   }
 
   void _goToRegister() {
     context.goNamed('register');
-  }
-
-  // Helper for SnackBar (Can be red for error, default is standard black)
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.black87,
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override

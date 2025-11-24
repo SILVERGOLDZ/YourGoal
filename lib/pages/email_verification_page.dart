@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart'; // Diperlukan untuk navigasi
 import 'package:tes/auth_service.dart';
 import 'package:tes/theme/colors.dart'; // Sesuaikan path import warna Anda
+import 'package:tes/utils/snackbar_helper.dart';
 
 class EmailVerificationPage extends StatefulWidget {
   const EmailVerificationPage({super.key});
@@ -70,13 +71,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
         timer?.cancel();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✅ Email Terverifikasi! Mengalihkan...'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          showSnackBar(context, '✅ Email Terverifikasi! Mengalihkan...');
 
           // Beri jeda singkat agar pengguna sempat membaca pesan sukses.
           await Future.delayed(const Duration(milliseconds: 500));
@@ -103,15 +98,11 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
         final message = isInitial
             ? 'Link verifikasi telah dikirim ke email Anda.'
             : 'Email verifikasi telah dikirim ulang!';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        showSnackBar(context, message);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim email: ${e.toString()}')),
-        );
+        showSnackBar(context, 'Gagal mengirim email: ${e.toString()}', isError: true);
       }
     } finally {
       // Pastikan state diatur kembali menjadi false setelah proses selesai.

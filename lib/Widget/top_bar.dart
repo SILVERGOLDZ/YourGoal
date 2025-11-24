@@ -11,6 +11,7 @@ class TopBar extends StatelessWidget {
   final bool pin; //optional
   final bool floating; //optional
   final bool showBack; //optional
+  final List<Widget>? actions;
 
   TopBar({
     super.key,
@@ -20,6 +21,8 @@ class TopBar extends StatelessWidget {
     this.showBack = true,
     this.transparent,
     this.pin = true,
+    this.actions,
+    this.actions,
     this.floating = true,
   });
 
@@ -57,6 +60,7 @@ class TopBar extends StatelessWidget {
         ),
       ),
       centerTitle: true,
+      actions: actions,
     );
   }
 }
