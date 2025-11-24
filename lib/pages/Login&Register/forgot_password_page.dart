@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/auth_service.dart';
 import 'package:tes/theme/colors.dart'; // Adjust the color import path
+import 'package:tes/utils/snackbar_helper.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -38,23 +39,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (error == null) {
         // SUCCESS
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('A password reset link has been sent to your email!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 4),
-          ),
-        );
+        showSnackBar(context, 'A password reset link has been sent to your email!');
         // Optional: Go back to the login page after success
         context.pop();
       } else {
         // FAILED
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(error),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showSnackBar(context, error, isError: true);
       }
     }
   }

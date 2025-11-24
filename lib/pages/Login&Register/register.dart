@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/auth_service.dart';
+import 'package:tes/utils/snackbar_helper.dart';
 
 class RegisterPage extends StatefulWidget {
   // Tidak butuh parameter extraData lagi
@@ -53,39 +54,17 @@ class _RegisterPageState extends State<RegisterPage> {
     if (error == null) {
       // SUKSES
       if (mounted) {
-        _showSuccessSnackBar('Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
+        showSnackBar(context, 'Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
         // GoRouter otomatis handle navigasi
       }
     } else {
       // GAGAL
-      if (mounted) _showErrorSnackBar(error);
+      if (mounted) showSnackBar(context, error, isError: true);
     }
 
     if (mounted) {
       setState(() => _isLoading = false);
     }
-  }
-
-  // Helper untuk menampilkan SnackBar error
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  // Helper untuk menampilkan SnackBar sukses
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        duration: const Duration(seconds: 4),
-      ),
-    );
   }
 
   @override
