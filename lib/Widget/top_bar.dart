@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 class TopBar extends StatelessWidget {
   final String title;
   final double screenSize;
+  final List<Widget>? actions;
 
   bool? transparent; //nullable, Optional
 
@@ -20,6 +21,7 @@ class TopBar extends StatelessWidget {
     this.showBack = true,
     this.transparent,
     this.pin = true,
+    this.actions,
     this.floating = true,
   });
 
@@ -57,6 +59,7 @@ class TopBar extends StatelessWidget {
         ),
       ),
       centerTitle: true,
+      actions: actions,
     );
   }
 }
