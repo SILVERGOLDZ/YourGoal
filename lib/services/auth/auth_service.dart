@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:tes/services/auth/user_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
   final UserService _userService = UserService();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -55,11 +59,45 @@ class AuthService {
     }
   }
 
+  // --- UPLOAD PROFILE PICTURE ---
+  Future<String?> uploadProfilePicture(File imageFile) async {
+    try {
+      User? user = _auth.currentUser;
+      if (user == null) return null;
+
+      // Create a reference to the location you want to upload to.
+      Reference storageRef = _storage.ref().child('profile_pictures/${user.uid}.jpg');
+
+      // Upload the file.
+      UploadTask uploadTask = storageRef.putFile(imageFile);
+
+      // Get the download URL.
+      TaskSnapshot snapshot = await uploadTask;
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      debugPrint("Error uploading profile picture: $e");
+      return null;
+    }
+  }
+
+
   // --- UPDATE DATA ---
   Future<bool> updateUserData(Map<String, dynamic> data) async {
     User? user = _auth.currentUser;
     if (user != null) {
-      return await _userService.updateUserData(user.uid, data);
+      try {
+        // If there's a new photo URL, update it in Firebase Auth as well
+        if (data.containsKey('photoURL')) {
+          await user.updatePhotoURL(data['photoURL']);
+        }
+
+        return await _userService.updateUserData(user.uid, data);
+      } catch (e) {
+        debugPrint("Error updating user data: $e");
+        return false;
+      }
     }
     return false;
   }

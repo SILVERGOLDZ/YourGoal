@@ -7,22 +7,21 @@ import 'package:flutter/material.dart';
 //TODO: Visit world button
 
 class PostCard extends StatelessWidget{
-  //final Image user_profile_image
   final String user;
   final String text;
   final int like;
   final String? image;
   final double screenwidth;
+  final String? photoUrl;
 
   PostCard({
     super.key,
-    //TODO: tambah profil image
-    //required this.user_profile_image,
     required this.user,
     required this.text,
     required this.like,
     this.image,
-    required this.screenwidth
+    required this.screenwidth,
+    this.photoUrl,
   });
 
   @override

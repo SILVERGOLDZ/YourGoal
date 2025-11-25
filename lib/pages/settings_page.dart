@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tes/config/routes.dart';
 import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:tes/utils/snackbar_helper.dart';
@@ -39,11 +40,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
     if (user != null) {
       try {
-        _email = user.email;
+        await user.reload();
+        user = _authService.currentUser; 
+
+        _email = user!.email;
         _photoUrl = user.photoURL;
 
         DocumentSnapshot doc =
-        await _firestore.collection('users').doc(user.uid).get();
+            await _firestore.collection('users').doc(user.uid).get();
 
         if (doc.exists && mounted) {
           Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -61,113 +65,26 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  void _showEditProfileDialog() {
-    final formKey = GlobalKey<FormState>();
-    final firstNameController = TextEditingController(text: _firstName);
-    final lastNameController = TextEditingController(text: _lastName);
-    final phoneController = TextEditingController(text: _phone);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Profile'),
-          content: SingleChildScrollView(
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: lastNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone',
-                      prefixIcon: Icon(Icons.phone_android),
-                    ),
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  Navigator.pop(context);
-                  setState(() => _isLoading = true);
-
-                  bool success = await _authService.updateUserData({
-                    'firstName': firstNameController.text.trim(),
-                    'lastName': lastNameController.text.trim(),
-                    'phone': phoneController.text.trim(),
-                  });
-
-                  if (mounted) {
-                    if (success) {
-                      await _fetchUserData();
-                      showSnackBar(context,'Profile Updated Successfully!');
-                    } else {
-                      setState(() => _isLoading = false);
-                      showSnackBar(context, 'Failed to update profile.', isError: true);
-                    }
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.active,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   void _deleteAccount() async {
     bool confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-        content: const Text(
-            'Are you sure? This action cannot be undone. All your data will be permanently lost.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
+            content: const Text(
+                'Are you sure? This action cannot be undone. All your data will be permanently lost.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Delete Permanently',
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete Permanently',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (confirm) {
@@ -281,7 +198,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         radius: 30,
                         backgroundImage: _photoUrl != null
                             ? NetworkImage(_photoUrl!)
-                            : const AssetImage('assets/images/profile.jpg') as ImageProvider,
+                            : const AssetImage('assets/images/default_profile.png')
+                                as ImageProvider,
                         backgroundColor: Colors.grey[200],
                       ),
                       const SizedBox(width: 15),
@@ -315,7 +233,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       IconButton(
-                        onPressed: _showEditProfileDialog,
+                        onPressed: () => context.push(AppRoutes.editProfile).then((_) => _fetchUserData()),
                         icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
                       )
                     ],
@@ -335,13 +253,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: Icons.shield_outlined,
                         title: "Account Safety",
                         showDivider: true,
-                        onTap: () => showSnackBar(context, 'This feature is not implemented yet'),
+                        onTap: () =>
+                            showSnackBar(context, 'This feature is not implemented yet'),
                       ),
                       _buildListTile(
                         icon: Icons.bookmark_outline,
                         title: "Saved Post",
                         showDivider: false,
-                        onTap: () => showSnackBar(context, 'This feature is not implemented yet'),
+                        onTap: () =>
+                            showSnackBar(context, 'This feature is not implemented yet'),
                       ),
                     ],
                   ),
@@ -360,13 +280,15 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: Icons.translate,
                         title: "Language",
                         showDivider: true,
-                        onTap: () => showSnackBar(context, 'This feature is not implemented yet'),
+                        onTap: () =>
+                            showSnackBar(context, 'This feature is not implemented yet'),
                       ),
                       _buildListTile(
                         icon: Icons.accessibility_new,
                         title: "Accessibility",
                         showDivider: false,
-                        onTap: () => showSnackBar(context, 'This feature is not implemented yet'),
+                        onTap: () =>
+                            showSnackBar(context, 'This feature is not implemented yet'),
                       ),
                     ],
                   ),
