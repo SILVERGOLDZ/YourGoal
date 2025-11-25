@@ -281,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         radius: 30,
                         backgroundImage: _photoUrl != null
                             ? NetworkImage(_photoUrl!)
-                            : const AssetImage('assets/images/profile.jpg') as ImageProvider,
+                            : const AssetImage('assets/images/default_profile.png') as ImageProvider,
                         backgroundColor: Colors.grey[200],
                       ),
                       const SizedBox(width: 15),

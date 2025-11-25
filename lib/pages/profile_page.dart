@@ -152,7 +152,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: Colors.grey[200],
                   backgroundImage: _photoUrl != null
                       ? NetworkImage(_photoUrl!)
-                      : const AssetImage('assets/profile.jpg') as ImageProvider,
+                      : const AssetImage('assets/images/default_profile.png') as ImageProvider,
                 ),
               ),
 
