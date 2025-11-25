@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tes/pages/collection.dart';
+import 'package:tes/pages/edit_profile_page.dart';
 import 'package:tes/pages/settings_page.dart';
 import 'package:tes/Widget/navigation_widget.dart';
 import 'package:tes/pages/home_page.dart';
@@ -26,6 +27,7 @@ class AppRoutes {
   static const String newgoal = '/newgoal';
   static const String collection = '/collection';
   static const String forgotPassword = '/forgot-password';
+  static const String editProfile = '/edit-profile';
 }
 
 GoRouter createRouter(Stream<User?> authStream) {
@@ -91,6 +93,11 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.editProfile,
+        name: 'editProfile',
+        builder: (context, state) => const EditProfilePage(),
       ),
       GoRoute(
         path: AppRoutes.newgoal,

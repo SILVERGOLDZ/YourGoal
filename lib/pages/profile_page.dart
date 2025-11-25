@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/painting.dart';
 import 'package:tes/Widget/top_bar.dart';
 import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/config/routes.dart';
@@ -43,7 +44,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (user != null) {
       try {
-        _email = user.email;
+        // Evict the old image from cache before reloading
+        if (_photoUrl != null) {
+          await PaintingBinding.instance.imageCache.evict(NetworkImage(_photoUrl!));
+        }
+
+        await user.reload(); // Reload user to get the latest photoURL
+        user = _authService.currentUser;
+
+        _email = user!.email;
         _photoUrl = user.photoURL;
 
         DocumentSnapshot doc =
@@ -57,7 +66,7 @@ class _ProfilePageState extends State<ProfilePage> {
           });
         } else if (mounted) {
           setState(() {
-            _firstName = user.displayName?.split(' ').first ?? "User";
+            _firstName = user?.displayName?.split(' ').first ?? "User";
             _lastName = "";
           });
         }
@@ -97,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.menu),
-                    onPressed: () => context.push(AppRoutes.settings),
+                    onPressed: () => context.push(AppRoutes.settings).then((_) => _fetchUserData()),
                   ),
                 ],
               ),
@@ -287,6 +296,7 @@ class _ProfilePageState extends State<ProfilePage> {
             like: 20 + index,
             image: 'assets/images/large_rocket_logo.png',
             screenwidth: screenWidth,
+            photoUrl: _photoUrl,
           )
               : Padding(
             padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
@@ -296,6 +306,7 @@ class _ProfilePageState extends State<ProfilePage> {
               like: 20 + index,
               image: 'assets/images/large_rocket_logo.png',
               screenwidth: screenWidth,
+              photoUrl: _photoUrl,
             ),
           );
         },
