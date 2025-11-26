@@ -15,6 +15,9 @@ import 'package:tes/pages/email_verification_page.dart';
 import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
 import 'package:tes/pages/Login&Register/forgot_password_page.dart';
 
+import '../pages/mygoal_subpage/detailscreen_page.dart';
+import '../services/goaldata_service.dart';
+
 class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
@@ -28,6 +31,7 @@ class AppRoutes {
   static const String collection = '/collection';
   static const String forgotPassword = '/forgot-password';
   static const String editProfile = '/edit-profile';
+  static const String goalDetail = '/goal-detail';
 }
 
 GoRouter createRouter(Stream<User?> authStream) {
@@ -103,6 +107,14 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.newgoal,
         name: 'newgoal',
         builder: (context, state) => const NewRoadmapScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.goalDetail,
+        name: 'goalDetail',
+        builder: (context, state) {
+          RoadmapModel? roadmap = state.extra as RoadmapModel?;
+          return RoadmapDetailScreen(roadmap: roadmap);
+        },
       ),
       GoRoute(
         path: AppRoutes.collection,

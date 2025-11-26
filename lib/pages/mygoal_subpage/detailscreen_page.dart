@@ -1,63 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart'; // 1. WAJIB: Import GoRouter
+import 'package:go_router/go_router.dart';
 
-// 2. WAJIB: Import halaman NewRoadmapScreen
-// Sesuaikan path-nya jika berbeda, misal: 'new_roadmap_page.dart'
-import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
+import '../../services/goaldata_service.dart'; // Import Model
 
 class RoadmapDetailScreen extends StatefulWidget {
-  const RoadmapDetailScreen({super.key});
+  // Menerima data RoadmapModel
+  final RoadmapModel? roadmap;
+
+  const RoadmapDetailScreen({super.key, this.roadmap});
 
   @override
   State<RoadmapDetailScreen> createState() => _RoadmapDetailScreenState();
 }
 
 class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
-  // Data dummy
-  final List<Map<String, dynamic>> _goals = [
-    {
-      "title": "Ikuti 3 Kompetisi Nasional",
-      "status": "Complete",
-      "isCompleted": true,
-      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-      "subtasks": ["Konsultasi ke Mentor Raka", "Latihan 500 Soal", "Daftar Lomba UI/UX Gemastik"],
-      "message": "I wanna make my parent proud"
-    },
-    {
-      "title": "2. Pelajari Auto Layout",
-      "status": "In Progress",
-      "isCompleted": false,
-      "description": "Memahami konsep resizing, constraints, dan padding dalam Figma.",
-      "subtasks": ["Tonton tutorial YouTube", "Replicate desain Gojek"],
-      "message": "Konsisten adalah kunci!"
-    },
-    {
-      "title": "3. Buat Portfolio Case Study",
-      "status": "In Progress",
-      "isCompleted": false,
-      "description": "Membuat studi kasus lengkap dari riset hingga high-fidelity prototype.",
-      "subtasks": ["Cari ide masalah", "User Interview", "Wireframing"],
-      "message": "Jangan lupa istirahat."
-    },
-    {
-      "title": "4. Apply Magang",
-      "status": "In Progress",
-      "isCompleted": false,
-      "description": "Mencari lowongan UI/UX designer intern.",
-      "subtasks": ["Perbaiki CV ATS", "Kirim 10 lamaran per hari"],
-      "message": "Semangat cari duit!"
-    },
-  ];
+  late RoadmapModel _currentRoadmap;
 
-  // Logika Progress
-  double get progressValue {
-    if (_goals.isEmpty) return 0.0;
-    int completed = _goals.where((item) => item['isCompleted'] == true).length;
-    return completed / _goals.length;
+  @override
+  void initState() {
+    super.initState();
+    // Jika data dikirim, gunakan. Jika tidak (misal refresh/direct), gunakan dummy index 0
+    if (widget.roadmap != null) {
+      _currentRoadmap = widget.roadmap!;
+    } else {
+      _currentRoadmap = GoalDataService().roadmaps[0];
+    }
   }
 
+  // Hitung persentase untuk UI
   String get progressPercentage {
-    return "${(progressValue * 100).toInt()}%";
+    return "${(_currentRoadmap.progress * 100).toInt()}%";
   }
 
   @override
@@ -74,9 +46,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            // 3. LOGIKA BACK: Pindah ke route 'mygoal'
-            // Pastikan di routes.dart Anda name-nya benar-benar 'mygoal'
-            context.goNamed('mygoal');
+            context.pop();
           },
         ),
         title: Text(
@@ -88,43 +58,43 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
           ),
         ),
       ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: ElevatedButton(
-              onPressed: () {
-                // 2. EKSEKUSI NAVIGASI KE ROUTE 'newgoal'
-                // Menggunakan pushNamed agar bisa kembali (back) ke halaman detail ini
-                context.pushNamed('newgoal');
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryBlue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 55,
+          child: ElevatedButton(
+            onPressed: () {
+              // Logika Edit Goal bisa ditambahkan di sini
+              // context.pushNamed('newgoal', extra: _currentRoadmap);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
-                'Edit Goal',
-                style: textTheme.labelLarge?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+              elevation: 0,
+            ),
+            child: Text(
+              'Edit Goal',
+              style: textTheme.labelLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
           ),
         ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Judul Detail (Deskripsi Roadmap)
             Text(
-              "Learning Figma UI/UX Design",
+              _currentRoadmap.description,
               style: textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
@@ -133,7 +103,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              "Updated 2 weeks ago",
+              "Updated recently",
               style: textTheme.bodyMedium?.copyWith(
                 color: Colors.grey[500],
               ),
@@ -164,7 +134,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: LinearProgressIndicator(
-                value: progressValue,
+                value: _currentRoadmap.progress,
                 minHeight: 8,
                 backgroundColor: Colors.grey[200],
                 valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1E89EF)),
@@ -182,13 +152,15 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             ),
             const SizedBox(height: 16),
 
+            // LIST LANGKAH (STEPS)
+            // Diambil dari _currentRoadmap.steps
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _goals.length,
+              itemCount: _currentRoadmap.steps.length,
               itemBuilder: (context, index) {
-                final item = _goals[index];
-                return _buildGoalCard(context, item, index);
+                final step = _currentRoadmap.steps[index];
+                return _buildGoalCard(context, step, index);
               },
             ),
           ],
@@ -197,10 +169,10 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
     );
   }
 
-  // Widget Card Goal (Bisa Diklik)
-  Widget _buildGoalCard(BuildContext context, Map<String, dynamic> item, int index) {
+  // Widget Card untuk Step
+  Widget _buildGoalCard(BuildContext context, StepModel step, int index) {
     final textTheme = Theme.of(context).textTheme;
-    final bool isCompleted = item['isCompleted'];
+    final bool isCompleted = step.isCompleted;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -214,7 +186,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            _showGoalDetailDialog(context, item, index);
+            _showGoalDetailDialog(context, step, index);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -242,7 +214,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item['title'],
+                        step.title,
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.black,
@@ -251,7 +223,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        item['status'],
+                        step.status,
                         style: textTheme.bodyMedium?.copyWith(
                           color: const Color(0xFF1E89EF),
                           fontWeight: FontWeight.w500,
@@ -270,7 +242,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
   }
 
   // Popup Detail
-  void _showGoalDetailDialog(BuildContext context, Map<String, dynamic> item, int index) {
+  void _showGoalDetailDialog(BuildContext context, StepModel step, int index) {
     final textTheme = Theme.of(context).textTheme;
 
     showDialog(
@@ -293,7 +265,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          item['title'],
+                          step.title,
                           style: textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -314,7 +286,7 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                   Text("Description:", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(
-                    item['description'] ?? "No description provided.",
+                    step.description,
                     style: textTheme.bodyMedium?.copyWith(color: Colors.black87, height: 1.5),
                     textAlign: TextAlign.justify,
                   ),
@@ -322,22 +294,26 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
 
                   Text("Subtask:", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  if (item['subtasks'] != null)
-                    ...List.generate((item['subtasks'] as List).length, (i) {
+                  // List Subtask Dinamis
+                  if (step.subtasks.isNotEmpty)
+                    ...step.subtasks.asMap().entries.map((entry) {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 4.0),
                         child: Text(
-                          "${i + 1}. ${item['subtasks'][i]}",
+                          "${entry.key + 1}. ${entry.value}",
                           style: textTheme.bodyMedium?.copyWith(color: Colors.black87),
                         ),
                       );
-                    }),
+                    })
+                  else
+                    const Text("-"),
+
                   const SizedBox(height: 20),
 
                   Text("Message from past me:", style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(
-                    item['message'] ?? "-",
+                    step.message,
                     style: textTheme.bodyMedium?.copyWith(color: Colors.black87),
                   ),
                   const SizedBox(height: 30),
@@ -348,8 +324,9 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          _goals[index]['isCompleted'] = true;
-                          _goals[index]['status'] = "Complete";
+                          // Update data di model
+                          step.isCompleted = true;
+                          step.status = "Complete";
                         });
                         Navigator.pop(context);
                       },
