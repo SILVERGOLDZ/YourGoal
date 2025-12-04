@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// MODEL UNTUK STEP (Langkah-langkah di dalam Detail Page)
-// Ini sesuai dengan dummy data JSON yang kamu berikan
+// ==========================================
+// 1. MODEL DATA (Updated for Firebase)
+// ==========================================
+
 class StepModel {
   String title;
   String status;
@@ -18,17 +21,42 @@ class StepModel {
     required this.subtasks,
     required this.message,
   });
+
+  // Convert Object ke Map (Untuk simpan ke Firestore)
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'status': status,
+      'isCompleted': isCompleted,
+      'description': description,
+      'subtasks': subtasks,
+      'message': message,
+    };
+  }
+
+  // Convert Map ke Object (Untuk baca dari Firestore)
+  factory StepModel.fromMap(Map<String, dynamic> map) {
+    return StepModel(
+      title: map['title'] ?? '',
+      status: map['status'] ?? 'In Progress',
+      isCompleted: map['isCompleted'] ?? false,
+      description: map['description'] ?? '',
+      subtasks: List<String>.from(map['subtasks'] ?? []),
+      message: map['message'] ?? '',
+    );
+  }
 }
 
-// MODEL UNTUK ROADMAP (Card Utama di Halaman MyGoal)
 class RoadmapModel {
+  String? id; // ID Dokumen Firestore (Penting untuk Update/Delete)
   String title;
   String time;
   String status;
-  String description; // Deskripsi umum roadmap
-  List<StepModel> steps; // List langkah-langkah di dalamnya
+  String description;
+  List<StepModel> steps;
 
   RoadmapModel({
+    this.id,
     required this.title,
     required this.time,
     required this.status,
@@ -36,139 +64,85 @@ class RoadmapModel {
     required this.steps,
   });
 
-  // Hitung progress bar secara otomatis berdasarkan jumlah step yang selesai
+  // Hitung progress
   double get progress {
     if (steps.isEmpty) return 0.0;
     int completedCount = steps.where((s) => s.isCompleted).length;
     return completedCount / steps.length;
   }
+
+  // Ke Map
+  Map<String, dynamic> toMap() {
+    return {
+      'title': title,
+      'time': time,
+      'status': status,
+      'description': description,
+      'steps': steps.map((x) => x.toMap()).toList(), // Convert list of objects to list of maps
+      'createdAt': FieldValue.serverTimestamp(), // Untuk sorting
+    };
+  }
+
+  // Dari Firestore Snapshot
+  factory RoadmapModel.fromFirestore(DocumentSnapshot doc) {
+    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    return RoadmapModel(
+      id: doc.id,
+      title: data['title'] ?? '',
+      time: data['time'] ?? '',
+      status: data['status'] ?? 'In Progress',
+      description: data['description'] ?? '',
+      steps: List<StepModel>.from(
+        (data['steps'] as List<dynamic>? ?? []).map((x) => StepModel.fromMap(x)),
+      ),
+    );
+  }
 }
 
-// SERVICE SINGLETON (DATABASE SEMENTARA)
+// ==========================================
+// 2. FIREBASE SERVICE (User Specific)
+// ==========================================
+
 class GoalDataService {
-  static final GoalDataService _instance = GoalDataService._internal();
-  factory GoalDataService() => _instance;
-  GoalDataService._internal();
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // DATA DUMMY AWAL (1 Roadmap berisi 4 Steps)
-  final List<RoadmapModel> roadmaps = [
-    RoadmapModel(
-      title: "Menjadi Senior Product\nDesigner",
-      time: "4 Tahun",
-      status: "In Progress",
-      description: "Perjalanan karir komprehensif dari memahami dasar desain hingga memimpin strategi produk di perusahaan teknologi besar.",
-      steps: [
-        StepModel(
-          title: "Tahun 1: Membangun Pondasi Visual",
-          status: "Complete",
-          isCompleted: true,
-          description: "Fokus pada penguasaan tools industri (Figma) dan prinsip dasar UI seperti tipografi, warna, dan layouting.",
-          subtasks: [
-            "Menyelesaikan Google UX Design Certificate",
-            "Eksplorasi 100 hari UI Challenge",
-            "Menguasai Auto Layout & Component Properties di Figma"
-          ],
-          message: "Jangan takut jelek di awal, kuantitas akan melahirkan kualitas.",
-        ),
-        StepModel(
-          title: "Tahun 2: UX Research & Real Projects",
-          status: "In Progress",
-          isCompleted: false,
-          description: "Mulai menangani masalah pengguna nyata, melakukan riset (User Interview, Usability Testing), dan magang.",
-          subtasks: [
-            "Magang di Startup Unicorn sebagai UI/UX Intern",
-            "Membuat 3 Studi Kasus End-to-End untuk Portfolio",
-            "Belajar Design System & Handover ke Developer"
-          ],
-          message: "Desain bukan cuma visual, tapi pemecahan masalah.",
-        ),
-        StepModel(
-          title: "Tahun 3: Product Strategy & Leadership",
-          status: "Not Started",
-          isCompleted: false,
-          description: "Memahami sisi bisnis dari produk, mentoring junior designer, dan memimpin inisiatif fitur baru.",
-          subtasks: [
-            "Mengambil peran Senior/Lead di project kantor",
-            "Belajar dasar Product Management & Data Analytics",
-            "Mentoring 5 Junior Designer"
-          ],
-          message: "Value kamu ada pada impact bisnis, bukan sekadar pixel.",
-        ),
-        StepModel(
-          title: "Tahun 4: Principal Level Mastery",
-          status: "Not Started",
-          isCompleted: false,
-          description: "Menjadi thought leader di industri, menulis buku/artikel, dan berbicara di konferensi internasional.",
-          subtasks: [
-            "Menjadi pembicara di Tech Conference Asia",
-            "Menerbitkan buku tentang Desain Produk di Indonesia",
-            "Membangun tim desain sendiri dari nol"
-          ],
-          message: "Legacy apa yang ingin kamu tinggalkan?",
-        ),
-      ],
-    ),
+  // Helper: Mendapatkan User ID saat ini
+  String? get _userId => _auth.currentUser?.uid;
 
-    // --- ROADMAP 2: ENGINEERING PATH ---
-    RoadmapModel(
-      title: "Menjadi CTO / Tech Lead\nExpert",
-      time: "5 Tahun",
-      status: "In Progress",
-      description: "Jalur karir teknikal untuk menguasai Software Engineering, System Architecture, hingga manajemen tim engineering skala besar.",
-      steps: [
-        StepModel(
-          title: "Tahun 1: Fullstack Mastery",
-          status: "Complete",
-          isCompleted: true,
-          description: "Menguasai satu stack teknologi secara mendalam (misal: Flutter + Firebase atau MERN Stack) hingga bisa membuat aplikasi kompleks sendirian.",
-          subtasks: [
-            "Membuat 5 Aplikasi Production-Ready di Play Store",
-            "Menguasai State Management (BLoC/Riverpod) tingkat lanjut",
-            "Paham Clean Architecture & SOLID Principles"
-          ],
-          message: "Coding itu seni logika, nikmati proses debugging-nya.",
-        ),
-        StepModel(
-          title: "Tahun 2-3: System Design & Backend",
-          status: "In Progress",
-          isCompleted: false,
-          description: "Belajar merancang sistem yang scalable, microservices, database optimization, dan cloud infrastructure (AWS/GCP).",
-          subtasks: [
-            "Sertifikasi AWS Solutions Architect Associate",
-            "Implementasi CI/CD Pipeline & Docker/Kubernetes",
-            "Belajar GoLang/Rust untuk High Performance Service"
-          ],
-          message: "Software Engineer yang hebat paham apa yang terjadi di balik layar.",
-        ),
-        StepModel(
-          title: "Tahun 4: Engineering Management",
-          status: "Not Started",
-          isCompleted: false,
-          description: "Transisi dari individual contributor menjadi manager. Fokus pada 'People', hiring, dan budaya engineering.",
-          subtasks: [
-            "Memimpin Squad berisi 8-10 Engineer",
-            "Melakukan Code Review & Technical Planning mingguan",
-            "Hiring & Onboarding talent baru"
-          ],
-          message: "Tugasmu sekarang adalah membuat timmu bersinar.",
-        ),
-        StepModel(
-          title: "Tahun 5: CTO / Architect Role",
-          status: "Not Started",
-          isCompleted: false,
-          description: "Bertanggung jawab atas visi teknologi perusahaan jangka panjang dan keputusan arsitektur krusial.",
-          subtasks: [
-            "Merancang arsitektur sistem untuk 5 Juta User",
-            "Menjadi Tech Co-Founder di Startup Series B",
-            "Investasi/Angel Investor di produk teknologi"
-          ],
-          message: "Dream big. The sky is not the limit.",
-        ),
-      ],
-    ),
-  ];
+  // Helper: Referensi ke Sub-Collection 'goals' milik user yang login
+  CollectionReference? get _goalsCollection {
+    if (_userId == null) return null;
+    return _db.collection('users').doc(_userId).collection('goals');
+  }
 
-  void addRoadmap(RoadmapModel roadmap) {
-    roadmaps.add(roadmap);
+  // CREATE: Tambah Goal Baru
+  Future<void> addRoadmap(RoadmapModel roadmap) async {
+    if (_goalsCollection == null) return;
+    await _goalsCollection!.add(roadmap.toMap());
+  }
+
+  // READ: Stream Data (Realtime Updates)
+  Stream<List<RoadmapModel>> getRoadmapsStream() {
+    if (_goalsCollection == null) return Stream.value([]);
+
+    return _goalsCollection!
+        .orderBy('createdAt', descending: true) // Urutkan dari yang terbaru
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => RoadmapModel.fromFirestore(doc)).toList();
+    });
+  }
+
+  // UPDATE: Update Progress / Edit Goal
+  Future<void> updateRoadmap(RoadmapModel roadmap) async {
+    if (_goalsCollection == null || roadmap.id == null) return;
+    await _goalsCollection!.doc(roadmap.id).update(roadmap.toMap());
+  }
+
+  // DELETE: Hapus Goal (Opsional)
+  Future<void> deleteRoadmap(String id) async {
+    if (_goalsCollection == null) return;
+    await _goalsCollection!.doc(id).delete();
   }
 }
