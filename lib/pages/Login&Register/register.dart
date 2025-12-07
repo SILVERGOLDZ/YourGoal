@@ -1,8 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/utils/snackbar_helper.dart';
+
+import '../../services/auth/user_service.dart';
 
 class RegisterPage extends StatefulWidget {
   // Tidak butuh parameter extraData lagi
@@ -43,6 +46,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
 
+    // 1. Lakukan Registrasi Auth (Email & Password)
     String? error = await _authService.registerWithEmailPassword(
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -52,13 +56,34 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (error == null) {
-      // SUKSES
-      if (mounted) {
-        showSnackBar(context, 'Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
-        // GoRouter otomatis handle navigasi
+      // --- TAMBAHAN PENTING ---
+      // 2. Jika Auth sukses, ambil User ID yang baru dibuat
+      User? currentUser = FirebaseAuth.instance.currentUser;
+
+      if (currentUser != null) {
+        // 3. Simpan data detail ke Firestore
+        try {
+          await UserService().createUser(
+            currentUser,
+            _firstNameController.text.trim(),
+            _lastNameController.text.trim(),
+            _phoneController.text.trim(),
+          );
+
+          // 4. Sukses Auth & Database
+          if (mounted) {
+            showSnackBar(context, 'Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
+            // GoRouter otomatis handle navigasi (listener auth state)
+            // Atau paksa pindah jika perlu: context.goNamed('login');
+          }
+        } catch (e) {
+          // Gagal simpan ke database (tapi auth sudah jadi)
+          if (mounted) showSnackBar(context, "Gagal menyimpan data profil: $e", isError: true);
+        }
       }
+      // ------------------------
     } else {
-      // GAGAL
+      // GAGAL AUTH
       if (mounted) showSnackBar(context, error, isError: true);
     }
 
