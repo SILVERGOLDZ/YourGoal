@@ -16,6 +16,7 @@ import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
 import 'package:tes/pages/Login&Register/forgot_password_page.dart';
 
 import '../pages/mygoal_subpage/detailscreen_page.dart';
+import '../pages/user_journey.dart';
 import '../services/goaldata_service.dart';
 
 class AppRoutes {
@@ -32,6 +33,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot-password';
   static const String editProfile = '/edit-profile';
   static const String goalDetail = '/goal-detail';
+  static const String journey = '/journey';
 }
 
 GoRouter createRouter(Stream<User?> authStream) {
@@ -120,6 +122,11 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.collection,
         name: 'collection',
         builder: (context, state) => const CollectionPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.journey,
+        name: 'journey',
+        builder: (context, state) => const UserJourneyPage(),
       ),
       GoRoute(
         path: AppRoutes.forgotPassword,

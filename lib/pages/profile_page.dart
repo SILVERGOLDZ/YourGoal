@@ -228,7 +228,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               //TODO: Buat page Growth Log dan navigasinya
               GestureDetector(
-                onTap: () => context.pushNamed('collection'),
+                onTap: () => context.pushNamed('journey'),
                 child: const SizedBox(
                   width: double.infinity,
                   height: 55,
