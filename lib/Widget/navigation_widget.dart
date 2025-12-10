@@ -4,25 +4,38 @@ import 'package:go_router/go_router.dart';
 
 import '../config/routes.dart';
 
-//TODO: Improve navigation for desktop
-class BottomNavigationShell extends StatelessWidget {
+class BottomNavigationShell extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const BottomNavigationShell({super.key, required this.navigationShell});
 
+  @override
+  State<BottomNavigationShell> createState() => _BottomNavigationShellState();
+}
+
+class _BottomNavigationShellState extends State<BottomNavigationShell> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isSidebarExpanded = false;
+
   void _onItemTapped(BuildContext context, int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
+    // Close drawer on tablet after navigation
+    if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
-    final currentIndex = navigationShell.currentIndex;
-    final bool isMobile = screenWidth < 768;
+    final currentIndex = widget.navigationShell.currentIndex;
+    final bool isMobile = screenWidth < 600;
+    final bool isTablet = screenWidth >= 600 && screenWidth < 1080;
+    final bool isDesktop = screenWidth >= 1080;
 
     return PopScope(
       canPop: false,
@@ -32,7 +45,6 @@ class BottomNavigationShell extends StatelessWidget {
         final String currentLocation = GoRouterState.of(context).uri.path;
 
         if (currentLocation == AppRoutes.home) {
-          // Show exit confirmation dialog
           final shouldExit = await showDialog<bool>(
             context: context,
             builder: (context) => AlertDialog(
@@ -51,7 +63,6 @@ class BottomNavigationShell extends StatelessWidget {
             ),
           );
 
-          // Exit app if user confirmed
           if (shouldExit == true) {
             SystemNavigator.pop();
           }
@@ -66,14 +77,38 @@ class BottomNavigationShell extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Scaffold(
+          key: _scaffoldKey,
           body: isMobile
-              ? navigationShell
+              ? widget.navigationShell
               : Row(
             children: [
-              // Sidebar navigation for desktop
-              _buildSidebar(context, currentIndex, screenWidth, screenHeight),
-              // Main content
-              Expanded(child: navigationShell),
+              if (isTablet)
+                _buildTabletSidebar(
+                  context,
+                  currentIndex,
+                  screenHeight,
+                ),
+              if (isDesktop)
+                MouseRegion(
+                  onEnter: (_) {
+                    setState(() {
+                      _isSidebarExpanded = true;
+                    });
+                  },
+                  onExit: (_) {
+                    setState(() {
+                      _isSidebarExpanded = false;
+                    });
+                  },
+                  child: _buildDesktopSidebar(
+                    context,
+                    currentIndex,
+                    screenHeight,
+                  ),
+                ),
+              Expanded(
+                child: widget.navigationShell,
+              ),
             ],
           ),
           extendBody: true,
@@ -85,55 +120,50 @@ class BottomNavigationShell extends StatelessWidget {
                 top: BorderSide(
                   color: Colors.grey,
                   width: 1.0,
-                )
-              )
+                ),
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-
-                //TODO: BUAT ICONNYA SESUAI DENGAN PAGE TUJUAN
-                _buildNavItem(
-                  context,
-                  0,
-                  'assets/images/Dashboard_logo.png',
-                  'Home',
-                  currentIndex,
-                  screenWidth,
-                  screenHeight,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(
+                      context,
+                      0,
+                      'assets/images/Dashboard_logo.png',
+                      'Home',
+                      currentIndex,
+                      screenWidth,
+                    ),
+                    _buildNavItem(
+                      context,
+                      1,
+                      'assets/images/My_Goal_Logo.png',
+                      'My Goal',
+                      currentIndex,
+                      screenWidth,
+                    ),
+                    _buildNavItem(
+                      context,
+                      2,
+                      'assets/images/Notification_logo.png',
+                      'Notifications',
+                      currentIndex,
+                      screenWidth,
+                    ),
+                    _buildNavItem(
+                      context,
+                      3,
+                      'assets/images/profile_logo.png',
+                      'Profile',
+                      currentIndex,
+                      screenWidth,
+                    ),
+                  ],
                 ),
-
-                _buildNavItem(
-                  context,
-                  1,
-                  'assets/images/My_Goal_Logo.png',
-                  'mygoal',
-                  currentIndex,
-                  screenWidth,
-                  screenHeight,
-                ),
-
-                _buildNavItem(
-                  context,
-                  2,
-                  'assets/images/Notification_logo.png',
-                  'notifications',
-                  currentIndex,
-                  screenWidth,
-                  screenHeight,
-                ),
-
-                _buildNavItem(
-                  context,
-                  3,
-                  'assets/images/profile_logo.png',
-                  'profile',
-                  currentIndex,
-                  screenWidth,
-                  screenHeight,
-                ),
-
-              ],
+              ),
             ),
           )
               : null,
@@ -142,14 +172,58 @@ class BottomNavigationShell extends StatelessWidget {
     );
   }
 
-  Widget _buildSidebar(
+  Widget _buildNavItem(
       BuildContext context,
+      int index,
+      String image,
+      String label,
       int currentIndex,
       double screenWidth,
+      ) {
+    final isActive = index == currentIndex;
+
+    return Flexible(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onItemTapped(context, index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                image,
+                color: isActive ? Colors.blue : Colors.grey.shade600,
+                width: 24,
+                height: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? Colors.blue : Colors.grey,
+                  fontSize: 12,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabletSidebar(
+      BuildContext context,
+      int currentIndex,
       double screenHeight,
       ) {
     return Container(
       width: 250,
+      height: double.infinity,
       decoration: const BoxDecoration(
         color: Color(0xFF702e46),
         boxShadow: [
@@ -160,63 +234,118 @@ class BottomNavigationShell extends StatelessWidget {
           ),
         ],
       ),
-      child: SingleChildScrollView(
+      child: SafeArea(
         child: Column(
-        children: [
-          SizedBox(height: screenHeight * 0.05),
-          // App title or logo (optional)
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              'Navigation',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                'Navigation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          const Divider(color: Colors.white24, thickness: 1),
-          SizedBox(height: 20),
-          // Navigation items
-          //TODO: ICON UBAH MENJADI SESUAI
-          _buildSidebarItem(
-            context,
-            0,
-            'assets/images/Dashboard_logo.png',
-            'Home',
-            currentIndex,
-          ),
-          _buildSidebarItem(
-            context,
-            1,
-            'assets/images/My_Goal_Logo.png',
-            'mygoal',
-            currentIndex,
-          ),
-          _buildSidebarItem(
-            context,
-            2,
-            'assets/images/Notification_logo.png',
-            'notifications',
-            currentIndex,
-          ),
-          _buildSidebarItem(
-            context,
-            3,
-            'assets/images/profile_logo.png',
-            'profile',
-            currentIndex,
-          ),
-        ],
-      ),
+            const Divider(color: Colors.white24, thickness: 1),
+            const SizedBox(height: 10),
+            _buildDrawerItem(
+              context,
+              0,
+              'assets/images/Dashboard_logo.png',
+              'Home',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              1,
+              'assets/images/My_Goal_Logo.png',
+              'My Goal',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              2,
+              'assets/images/Notification_logo.png',
+              'Notifications',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              3,
+              'assets/images/profile_logo.png',
+              'Profile',
+              currentIndex,
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  Widget _buildTabletDrawer(
+      BuildContext context,
+      int currentIndex,
+      double screenHeight,
+      ) {
+    return Container(
+      color: const Color(0xFF702e46),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text(
+                'Navigation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Divider(color: Colors.white24, thickness: 1),
+            const SizedBox(height: 10),
+            _buildDrawerItem(
+              context,
+              0,
+              'assets/images/Dashboard_logo.png',
+              'Home',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              1,
+              'assets/images/My_Goal_Logo.png',
+              'My Goal',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              2,
+              'assets/images/Notification_logo.png',
+              'Notifications',
+              currentIndex,
+            ),
+            _buildDrawerItem(
+              context,
+              3,
+              'assets/images/profile_logo.png',
+              'Profile',
+              currentIndex,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  //TODO: UBAH AGAR TAMPILAN PAGE AKTIF MENJADI SESUAI FIGMA!
-  Widget _buildSidebarItem(
+  Widget _buildDrawerItem(
       BuildContext context,
       int index,
       String image,
@@ -242,17 +371,20 @@ class BottomNavigationShell extends StatelessWidget {
               children: [
                 Image.asset(
                   image,
-                  color: isActive ? Colors.blue : Colors.grey.shade600,
-                  width: 20,
-                  height: 20,
+                  color: Colors.white,
+                  width: 24,
+                  height: 24,
                 ),
                 const SizedBox(width: 16),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: isActive ? Colors.white : Colors.grey.shade400,
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 16,
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -263,173 +395,111 @@ class BottomNavigationShell extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(
+  Widget _buildDesktopSidebar(
+      BuildContext context,
+      int currentIndex,
+      double screenHeight,
+      ) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: _isSidebarExpanded ? 250 : 80,
+      height: double.infinity,
+      decoration: const BoxDecoration(
+        color: Color(0xFF702e46),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 8,
+            offset: Offset(2, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          _buildSidebarItem(
+            context,
+            0,
+            'assets/images/Dashboard_logo.png',
+            'Home',
+            currentIndex,
+          ),
+          _buildSidebarItem(
+            context,
+            1,
+            'assets/images/My_Goal_Logo.png',
+            'My Goal',
+            currentIndex,
+          ),
+          _buildSidebarItem(
+            context,
+            2,
+            'assets/images/Notification_logo.png',
+            'Notifications',
+            currentIndex,
+          ),
+          _buildSidebarItem(
+            context,
+            3,
+            'assets/images/profile_logo.png',
+            'Profile',
+            currentIndex,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem(
       BuildContext context,
       int index,
       String image,
       String label,
       int currentIndex,
-      double screenWidth,
-      double screenHeight,
       ) {
     final isActive = index == currentIndex;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _onItemTapped(context, index),
-      child: Container(
-        width: screenWidth / 4,
-        padding: EdgeInsets.symmetric(vertical: screenHeight * 0.01),
-        child: Padding(
-          padding: EdgeInsets.all(10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset(
-                image, // ✅ correct usage
-                color: isActive ? Colors.blue : Colors.grey.shade600,
-                width: 20,
-                height: 20,
-              ),
-              SizedBox(height: screenHeight * 0.01),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: screenWidth * 0.03,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _onItemTapped(context, index),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xffa64267) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  image,
+                  color: Colors.white,
+                  width: 28,
+                  height: 28,
                 ),
-              ),
-            ],
+                if (_isSidebarExpanded) ...[
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        fontSize: 16,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
-
-// import 'package:flutter/material.dart';
-// import 'package:tes/pages/notification.dart';
-// import 'package:tes/pages/home_page.dart';
-// import 'package:tes/pages/mygoal_page.dart';
-// import 'package:tes/pages/profile_page.dart';
-//
-// class navigation_widget extends StatefulWidget {
-//   const navigation_widget({super.key});
-//
-//   @override
-//   State<navigation_widget> createState() => _navigation_widgetState();
-// }
-//
-// // Ganti nama class dari _MyHomePageState menjadi _MainNavigationShellState
-// class _navigation_widgetState extends State<navigation_widget> {
-//   // 2. Semua state tetap di sini
-//   int _counter = 0;
-//   int currentPageIndex = 0;
-//
-//   void _incrementCounter() {
-//     setState(() {
-//       _counter++;
-//     });
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final ThemeData theme = Theme.of(context);
-//
-//     // 3. Buat daftar "Isi", tapi sekarang panggil class-nya
-//     final List<Widget> pages = [
-//       // Berikan state _counter ke HomePage
-//       HomePage(counterValue: _counter),
-//       const MyGoalPage(),
-//       const NotificationPage(),
-//       const ProfilePage(),
-//     ];
-//
-//     // 4. Seluruh Scaffold tetap di sini
-//     return Scaffold(
-//       // appBar: AppBar(
-//       //   backgroundColor: theme.colorScheme.inversePrimary,
-//       //   title: const Text('bagaimana buat latar birunya?'), // Ganti judul jika perlu
-//       // ),
-//
-//       // 5. Body sekarang memanggil 'pages'
-//       body: pages[currentPageIndex],
-//       bottomNavigationBar: NavigationBar(
-//         onDestinationSelected: (int index) {
-//           setState(() {
-//             currentPageIndex = index;
-//           });
-//         },
-//         indicatorColor: Colors.transparent,
-//         selectedIndex: currentPageIndex,
-//         destinations: <Widget>[
-//           NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
-//             selectedIcon: Image.asset(
-//               'assets/images/Dashboard_logo.png',
-//               width: 24,
-//               height: 24,
-//               color: const Color(0xFF137FEC),
-//             ),
-//             icon: Image.asset(
-//               'assets/images/Dashboard_logo.png',
-//               width: 24, // Jangan lupa atur ukuran
-//               height: 24,
-//             ),
-//             label: 'Dashboard',
-//           ),
-//           NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
-//             selectedIcon: Image.asset(
-//               'assets/images/My_Goal_Logo.png',
-//               width: 24,
-//               height: 24,
-//               color: const Color(0xFF137FEC),
-//             ),
-//             icon: Image.asset(
-//               'assets/images/My_Goal_Logo.png',
-//               width: 24, // Jangan lupa atur ukuran
-//               height: 24,
-//             ),
-//             label: 'My Goal',
-//           ),
-//           NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
-//             selectedIcon: Image.asset(
-//               'assets/images/Notification_logo.png',
-//               width: 24,
-//               height: 24,
-//               color: const Color(0xFF137FEC),
-//             ),
-//             icon: Image.asset(
-//               'assets/images/Notification_logo.png',
-//               width: 24, // Jangan lupa atur ukuran
-//               height: 24,
-//             ),
-//             label: 'Notifications',
-//           ),
-//           NavigationDestination( // <-- Item ini TIDAK const (karena Image.asset)
-//             selectedIcon: Image.asset(
-//               'assets/images/profile_logo.png',
-//               width: 24,
-//               height: 24,
-//               color: const Color(0xFF137FEC),
-//             ),
-//             icon: Image.asset(
-//               'assets/images/profile_logo.png',
-//               width: 24, // Jangan lupa atur ukuran
-//               height: 24,
-//             ),
-//             label: 'Profile',
-//           ),
-//         ],
-//       ),
-//
-//       // 6. FAB kondisional tetap di sini
-//       floatingActionButton: currentPageIndex == 0
-//           ? FloatingActionButton(
-//         onPressed: _incrementCounter,
-//         tooltip: 'Increment',
-//         child: const Icon(Icons.add),
-//       )
-//           : null,
-//     );
-//   }
-// }
