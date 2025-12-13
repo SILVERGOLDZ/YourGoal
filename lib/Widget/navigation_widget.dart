@@ -132,8 +132,8 @@ class _BottomNavigationShellState extends State<BottomNavigationShell> {
                     _buildNavItem(
                       context,
                       0,
-                      'assets/images/Dashboard_logo.png',
-                      'Home',
+                      'assets/images/explore.png',
+                      'Explore',
                       currentIndex,
                       screenWidth,
                     ),
@@ -141,7 +141,7 @@ class _BottomNavigationShellState extends State<BottomNavigationShell> {
                       context,
                       1,
                       'assets/images/My_Goal_Logo.png',
-                      'My Goal',
+                      'Home',
                       currentIndex,
                       screenWidth,
                     ),
@@ -255,15 +255,15 @@ class _BottomNavigationShellState extends State<BottomNavigationShell> {
             _buildDrawerItem(
               context,
               0,
-              'assets/images/Dashboard_logo.png',
-              'Home',
+              'assets/images/explore.png',
+              'Explore',
               currentIndex,
             ),
             _buildDrawerItem(
               context,
               1,
               'assets/images/My_Goal_Logo.png',
-              'My Goal',
+              'Home',
               currentIndex,
             ),
             _buildDrawerItem(
@@ -314,15 +314,15 @@ class _BottomNavigationShellState extends State<BottomNavigationShell> {
             _buildDrawerItem(
               context,
               0,
-              'assets/images/Dashboard_logo.png',
-              'Home',
+              'assets/images/explore.png',
+              'Explore',
               currentIndex,
             ),
             _buildDrawerItem(
               context,
               1,
               'assets/images/My_Goal_Logo.png',
-              'My Goal',
+              'Home',
               currentIndex,
             ),
             _buildDrawerItem(
@@ -421,15 +421,15 @@ class _BottomNavigationShellState extends State<BottomNavigationShell> {
           _buildSidebarItem(
             context,
             0,
-            'assets/images/Dashboard_logo.png',
-            'Home',
+            'assets/images/explore.png',
+            'Explore',
             currentIndex,
           ),
           _buildSidebarItem(
             context,
             1,
             'assets/images/My_Goal_Logo.png',
-            'My Goal',
+            'Home',
             currentIndex,
           ),
           _buildSidebarItem(

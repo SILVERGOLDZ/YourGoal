@@ -23,7 +23,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String register = '/register';
   static const String notification = '/notification';
-  static const String mygoal = '/mygoal';
+  static const String explore = '/explore';
   static const String home = '/home';
   static const String profile = '/profile';
   static const String settings = '/settings';
@@ -141,17 +141,17 @@ GoRouter createRouter(Stream<User?> authStream) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.home,
-                name: 'home',
-                builder: (context, state) => const HomePage(),
+                path: AppRoutes.explore,
+                name: 'explore',
+                builder: (context, state) => const ExplorePage(),
               ),
             ],
           ),
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.mygoal,
-                name: 'mygoal',
+                path: AppRoutes.home,
+                name: 'home',
                 builder: (context, state) => const MyGoalPage(),
               ),
             ],
