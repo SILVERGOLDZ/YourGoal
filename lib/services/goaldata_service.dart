@@ -180,12 +180,12 @@ class GoalDataService {
         final roadmap = RoadmapModel.fromFirestore(doc);
 
         for (var step in roadmap.steps) {
-          if (step.isCompleted) {
+          if (step.isCompleted && step.completedAt != null) {
             journeys.add(
               JourneyItem(
                 title: step.title,
                 goalTitle: roadmap.title,
-                time: DateTime.now(), // atau nanti pakai completedAt
+                time: step.completedAt!, // ← gunakan completedAt dari step
                 comment: step.comment,
               ),
             );
@@ -193,7 +193,10 @@ class GoalDataService {
         }
       }
 
-      return journeys.reversed.toList(); // terbaru di atas
+      // Sort by time, newest first
+      journeys.sort((a, b) => b.time.compareTo(a.time));
+
+      return journeys;
     });
   }
 
