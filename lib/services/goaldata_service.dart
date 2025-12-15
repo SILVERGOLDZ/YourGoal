@@ -186,6 +186,7 @@ class GoalDataService {
                 title: step.title,
                 goalTitle: roadmap.title,
                 time: DateTime.now(), // atau nanti pakai completedAt
+                comment: step.comment,
               ),
             );
           }
