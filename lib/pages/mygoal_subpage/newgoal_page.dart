@@ -60,9 +60,6 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... Bagian UI build TextField dan List Step sama persis dengan sebelumnya ...
-    // ... Hanya ubah tombol "Create Goal" untuk handle loading state ...
-
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
@@ -114,11 +111,12 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
                 child: Center(child: Text("No steps added yet.\nPress 'Add Step' to start planning.", textAlign: TextAlign.center, style: TextStyle(color: Colors.grey[500]))),
               )
             else
-              ..._addedSteps.asMap().entries.map((entry) => _buildStepPreviewCard(context, entry.key + 1, entry.value)),
+              ..._addedSteps.asMap().entries.map((entry) => _buildStepPreviewCard(context, entry.key, entry.value)),
 
             const SizedBox(height: 10),
             SizedBox(
               width: double.infinity, height: 55,
+              //Add step button
               child: TextButton(
                 onPressed: () => _showStepEditorDialog(context),
                 style: TextButton.styleFrom(backgroundColor: const Color(0xFFE3F2FD), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
@@ -131,10 +129,6 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
       ),
     );
   }
-
-  // --- Helper Widgets & Popup Logic sama persis dengan kode sebelumnya ---
-  // (Pastikan method _showStepEditorDialog, _buildMainTextField, _buildStepPreviewCard tetap ada seperti sebelumnya)
-  // ... Paste helper widgets here if full rewrite is needed, otherwise keep them ...
 
   Widget _buildMainTextField(BuildContext context, {required TextEditingController controller, required String hint, required int maxLines}) {
     final textTheme = Theme.of(context).textTheme;
@@ -154,102 +148,189 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
     );
   }
 
-  Widget _buildStepPreviewCard(BuildContext context, int number, StepModel step) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[300]!)),
-      child: Row(
-        children: [
-          Container(width: 40, height: 40, decoration: BoxDecoration(color: const Color(0xFFD1E5FA), borderRadius: BorderRadius.circular(8)), child: Center(child: Text("$number", style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1976D2))))),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(step.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), const SizedBox(height: 4), Text(step.description, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.grey[600], fontSize: 13))])),
-          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => setState(() => _addedSteps.remove(step)))
-        ],
+  Widget _buildStepPreviewCard(BuildContext context, int index, StepModel step) {
+    return GestureDetector(
+      onTap: () => _showStepEditorDialog(
+        context,
+        existingStep: step,
+        editIndex: index,
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+          color: Colors.white,
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(child: Text("${index + 1}")),
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(step.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Deadline: ${step.deadline.day}/${step.deadline.month}/${step.deadline.year}",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: () {
+                setState(() => _addedSteps.removeAt(index));
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showStepEditorDialog(BuildContext context) {
-    // ... (Kode popup sama seperti sebelumnya, hanya memastikan import StepModel benar) ...
-    final textTheme = Theme.of(context).textTheme;
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final deadlineController = TextEditingController();
-    final subtaskController = TextEditingController();
-    final messageController = TextEditingController();
+
+
+  void _showStepEditorDialog(BuildContext context, {StepModel? existingStep, int? editIndex}) {
+    final titleController = TextEditingController(text: existingStep?.title);
+    final descController = TextEditingController(text: existingStep?.description == "No description added" ? "" : existingStep?.description);
+    final messageController = TextEditingController(text: existingStep?.message == "No message added" ? "" : existingStep?.message);
+
+    DateTime? selectedDeadline = existingStep?.deadline;
 
     showDialog(
       context: context,
       builder: (context) {
-        bool isSubTaskInputVisible = false;
-        return StatefulBuilder(builder: (context, setState) {
-          return Dialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            backgroundColor: Colors.white,
-            insetPadding: const EdgeInsets.all(20),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel(context, "What I should do :"),
-                    const SizedBox(height: 8),
-                    _buildPopupTextField(context, controller: titleController, hint: "e.g Win a Tournament"),
-                    const SizedBox(height: 20),
-                    _buildLabel(context, "Description :"),
-                    const SizedBox(height: 8),
-                    _buildPopupTextField(context, controller: descriptionController, hint: "Details..."),
-                    const SizedBox(height: 20),
-                    _buildLabel(context, "Deadline :"),
-                    const SizedBox(height: 8),
-                    _buildPopupTextField(context, controller: deadlineController, hint: "25/06/2025", icon: Icons.calendar_today),
-                    const SizedBox(height: 20),
-                    _buildLabel(context, "Letter for future me :"),
-                    const SizedBox(height: 8),
-                    _buildPopupTextField(context, controller: messageController, hint: "Don't give up..."),
-                    const SizedBox(height: 30),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (titleController.text.isEmpty) return;
-                          // Gabung deskripsi + deadline
-                          String fullDesc = descriptionController.text;
-                          if (deadlineController.text.isNotEmpty) fullDesc += "\nDeadline: ${deadlineController.text}";
-                          if (fullDesc.isEmpty) fullDesc = "No details.";
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            Future<void> pickDate() async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: selectedDeadline ?? DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime(2100),
+              );
+              if (picked != null) {
+                setDialogState(() => selectedDeadline = picked);
+              }
+            }
 
-                          StepModel newStep = StepModel(
-                            title: titleController.text,
-                            status: "In Progress",
-                            isCompleted: false,
-                            description: fullDesc,
-                            subtasks: subtaskController.text.split('\n').where((s)=>s.trim().isNotEmpty).toList(),
-                            message: messageController.text.isNotEmpty ? messageController.text : "Keep going!",
-                          );
-                          this.setState(() => _addedSteps.add(newStep));
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF007BFF), foregroundColor: Colors.white),
-                        child: const Text("Finish"),
-                      ),
-                    )
-                  ],
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel(context, "What should I do *"),
+                        const SizedBox(height: 10),
+                        _buildPopupTextField(context, controller: titleController, hint: "Win a tournament"),
+
+                        const SizedBox(height: 16),
+
+                        _buildLabel(context, "Deadline *"),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: pickDate,
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0F0F0),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today),
+                                const SizedBox(width: 12),
+                                Text(
+                                  selectedDeadline == null
+                                      ? "Select deadline"
+                                      : "${selectedDeadline!.day}/${selectedDeadline!.month}/${selectedDeadline!.year}",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _buildLabel(context, "Sub task to complete this target (optional)"),
+                        const SizedBox(height: 10),
+                        _buildPopupTextField(context, controller: descController, hint: "1. Talk to senior for guidance\n2. Learn by watching others compete\n3. etc"),
+
+                        const SizedBox(height: 16),
+
+                        _buildLabel(context, "Letter for future me (optional)"),
+                        const SizedBox(height: 10),
+                        _buildPopupTextField(context, controller: messageController, hint: "Don't give up..."),
+
+                        const SizedBox(height: 24),
+
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: () {
+                              if (titleController.text.trim().isEmpty || selectedDeadline == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Title & Deadline are required")),
+                                );
+                                return;
+                              }
+
+                              final step = StepModel(
+                                title: titleController.text.trim(),
+                                deadline: selectedDeadline!,
+                                description: descController.text.trim().isEmpty ? "No description added" : descController.text.trim(),
+                                message: messageController.text.trim().isEmpty ? "No message added" : messageController.text.trim(),
+
+                                // 🔑 pertahankan data lama saat edit
+                                isCompleted: existingStep?.isCompleted ?? false,
+                                status: existingStep?.status ?? 'In Progress',
+                                comment: existingStep?.comment,
+                                completedAt: existingStep?.completedAt,
+                              );
+
+                              setState(() {
+                                if (editIndex != null) {
+                                  _addedSteps[editIndex] = step;
+                                } else {
+                                  _addedSteps.add(step);
+                                }
+                              });
+
+                              Navigator.pop(context);
+                            },
+                            child: Text(existingStep != null ? "Update Step" : "Add Step"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
   }
+
+
 
   Widget _buildLabel(BuildContext context, String text) {
     return Text(text, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 15));
   }
   Widget _buildPopupTextField(BuildContext context, {required TextEditingController controller, required String hint, IconData? icon}) {
-    return TextField(controller: controller, decoration: InputDecoration(hintText: hint, filled: true, fillColor: const Color(0xFFF0F0F0), suffixIcon: icon != null ? Icon(icon) : null, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
+    return TextField(controller: controller, maxLines: null, decoration: InputDecoration(hintText: hint, filled: true, fillColor: const Color(0xFFF0F0F0), suffixIcon: icon != null ? Icon(icon) : null, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
   }
 }

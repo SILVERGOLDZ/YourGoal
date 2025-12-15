@@ -56,9 +56,8 @@ class _UserJourneyPageState extends State<UserJourneyPage>{
                   SliverList.builder(
                     itemCount: journeys.length,
                     itemBuilder: (context, index) {
-                      return _textHolder(
-                        journeys[index],
-                        context,
+                      return JourneyTile(
+                          journey: journeys[index]
                       );
                     },
                   ),
@@ -71,36 +70,6 @@ class _UserJourneyPageState extends State<UserJourneyPage>{
     );
 
 
-  }
-
-  // Card template untuk tiap log
-  Widget _textHolder(
-      JourneyItem journey,
-      BuildContext context,
-      ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Colors.black12),
-          bottom: BorderSide(color: Colors.black12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            journey.title,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "From goal: ${journey.goalTitle}",
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _header(BuildContext context) {
@@ -122,6 +91,103 @@ class _UserJourneyPageState extends State<UserJourneyPage>{
             fontWeight: FontWeight.bold,
             height: 1.2,
           ),
+        ),
+      ),
+    );
+  }
+}
+
+
+class JourneyTile extends StatefulWidget {
+  final JourneyItem journey;
+  const JourneyTile({super.key, required this.journey});
+
+  @override
+  State<JourneyTile> createState() => _JourneyTileState();
+}
+
+class _JourneyTileState extends State<JourneyTile> {
+  bool _showComment = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final journey = widget.journey;
+    final hasComment = journey.comment != null && journey.comment!.trim().isNotEmpty;
+
+    return GestureDetector(
+      onTap: hasComment ? () {
+        setState(() => _showComment = !_showComment);
+      } : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Colors.black12),
+            bottom: BorderSide(color: Colors.black12),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(journey.title,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 4),
+                      Text(
+                        "From goal: ${journey.goalTitle}",
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Show dropdown indicator only if comment exists
+                if (hasComment)
+                  Icon(
+                    _showComment ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: Colors.grey,
+                  ),
+              ],
+            ),
+
+            // Animated comment section
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: _showComment && hasComment
+                  ? Container(
+                margin: const EdgeInsets.only(top: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.comment, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        journey.comment!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[800],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       ),
     );

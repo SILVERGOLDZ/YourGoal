@@ -8,45 +8,64 @@ import '../models/journey_model.dart';
 // ==========================================
 
 class StepModel {
-  String title;
-  String status;
+  final String title;
+  final String description;
+  final String message;
+  final DateTime deadline;
   bool isCompleted;
-  String description;
-  List<String> subtasks;
-  String message;
+  String status;
+  final List<String> subtasks;
+
+  // BARU
+  String? comment;              // hanya ada jika complete
+  DateTime? completedAt;        // timestamp selesai
 
   StepModel({
     required this.title,
-    required this.status,
-    required this.isCompleted,
-    required this.description,
-    required this.subtasks,
-    required this.message,
+    required this.deadline,
+    this.description = '',
+    this.message = '',
+    this.subtasks = const [],
+    this.isCompleted = false,
+    this.status = 'In Progress',
+    this.comment,
+    this.completedAt,
   });
 
-  // Convert Object ke Map (Untuk simpan ke Firestore)
   Map<String, dynamic> toMap() {
     return {
       'title': title,
-      'status': status,
-      'isCompleted': isCompleted,
       'description': description,
-      'subtasks': subtasks,
       'message': message,
+      'deadline': Timestamp.fromDate(deadline),
+      'subtasks': subtasks,
+      'isCompleted': isCompleted,
+      'status': status,
+      "comment": comment,
+      "completedAt": completedAt,
     };
   }
+
 
   // Convert Map ke Object (Untuk baca dari Firestore)
   factory StepModel.fromMap(Map<String, dynamic> map) {
     return StepModel(
       title: map['title'] ?? '',
-      status: map['status'] ?? 'In Progress',
-      isCompleted: map['isCompleted'] ?? false,
       description: map['description'] ?? '',
-      subtasks: List<String>.from(map['subtasks'] ?? []),
       message: map['message'] ?? '',
+      deadline: map['deadline'] != null
+          ? (map['deadline'] as Timestamp).toDate()
+          : DateTime.now(),
+      subtasks: List<String>.from(map['subtasks'] ?? []),
+      isCompleted: map['isCompleted'] ?? false,
+      status: map['status'] ?? 'In Progress',
+      comment: map['comment'], // NEW
+      completedAt: map['completedAt'] != null
+          ? (map['completedAt'] as Timestamp).toDate()
+          : null, // NEW
     );
   }
+
 }
 
 class RoadmapModel {
@@ -167,6 +186,7 @@ class GoalDataService {
                 title: step.title,
                 goalTitle: roadmap.title,
                 time: DateTime.now(), // atau nanti pakai completedAt
+                comment: step.comment,
               ),
             );
           }

@@ -22,16 +22,17 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
   }
 
   // --- FUNGSI UPDATE FIREBASE ---
-  void _markStepAsComplete(StepModel step) async {
+  void _markStepAsComplete(StepModel step, String? comment) async {
     setState(() {
       step.isCompleted = true;
       step.status = "Complete";
+      step.comment = comment?.isNotEmpty == true ? comment : null;
+      step.completedAt = DateTime.now();
     });
 
-    // Update seluruh dokumen roadmap ke Firestore
-    // Karena Step nested dalam Roadmap, kita harus re-save roadmapnya
     await GoalDataService().updateRoadmap(_currentRoadmap);
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -101,14 +102,28 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => _showGoalDetailDialog(context, step),
+          onTap: step.isCompleted
+              ? null
+              : () => _showGoalDetailDialog(context, step),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             child: Row(
               children: [
                 IgnorePointer(child: Transform.scale(scale: 1.3, child: Checkbox(value: isCompleted, onChanged: (val){}, activeColor: const Color(0xFF1E89EF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))))),
                 const SizedBox(width: 8),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(step.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)), Text(step.status, style: const TextStyle(color: Color(0xFF1E89EF), fontWeight: FontWeight.w500, fontSize: 14))]))
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(step.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)), Text(step.status, style: const TextStyle(color: Color(0xFF1E89EF), fontWeight: FontWeight.w500, fontSize: 14)), if (step.isCompleted) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    "Completed at: ${step.completedAt}",
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  if (step.comment != null)
+                    Text(
+                      "Comment: ${step.comment}",
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                ]
+                ]))
               ],
             ),
           ),
@@ -118,38 +133,78 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
   }
 
   void _showGoalDetailDialog(BuildContext context, StepModel step) {
-    // ... (Dialog UI sama) ...
-    // Di tombol "I have completed this goal":
-    /*
-     ElevatedButton(
-        onPressed: () {
-           _markStepAsComplete(step); // PANGGIL FUNGSI INI
-           Navigator.pop(context);
-        },
-        // ...
-     )
-     */
-    // Saya akan menulis full dialog code di file block agar tidak error
+    final commentController = TextEditingController();
     final textTheme = Theme.of(context).textTheme;
-    showDialog(context: context, builder: (ctx) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(step.title, style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 20)),
-        const SizedBox(height: 10),
-        Text(step.description),
-        const SizedBox(height: 20),
-        Text("Message:", style: TextStyle(fontWeight: FontWeight.bold)),
-        Text(step.message),
-        const SizedBox(height: 30),
-        SizedBox(width: double.infinity, height: 50, child: ElevatedButton(
-          onPressed: () {
-            _markStepAsComplete(step);
-            Navigator.pop(context);
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E89EF), foregroundColor: Colors.white),
-          child: const Text("I have completed this goal"),
-        ))
-      ])),
-    ));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(step.title,
+                    style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+
+                Text(step.description),
+                const SizedBox(height: 12),
+
+                Text("Message", style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(step.message),
+
+                const SizedBox(height: 20),
+
+                /// COMMENT (OPSIONAL)
+                TextField(
+                  controller: commentController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: "Optional comment...",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                /// WARNING
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Jika kamu menyelesaikan step ini, kamu tidak bisa membatalkannya.\n"
+                        "Apakah kamu yakin dan berintegritas dalam menyelesaikan step ini?",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _markStepAsComplete(
+                        step,
+                        commentController.text.trim(),
+                      );
+                      Navigator.pop(context);
+                    },
+                    child: const Text("I have completed this goal"),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
