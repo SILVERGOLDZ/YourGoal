@@ -12,6 +12,10 @@ import 'package:tes/Widget/base_page.dart';
 import '../Widget/gradient_button.dart';
 import '../Widget/post_card.dart';
 import '../Widget/stat_card.dart';
+import '../services/goaldata_service.dart';
+
+final FirebaseAuth _auth = FirebaseAuth.instance;
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -21,6 +25,34 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+
+  Stream<QuerySnapshot> _userPostsStream() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return const Stream.empty();
+
+    return _firestore
+        .collection('posts')
+        .where('userId', isEqualTo: uid)
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  Stream<List<RoadmapModel>> _userGoalsStream() {
+    final uid = _auth.currentUser?.uid;
+    if (uid == null) return Stream.value([]);
+
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('goals')
+        .snapshots()
+        .map(
+          (snapshot) =>
+          snapshot.docs.map((d) => RoadmapModel.fromFirestore(d)).toList(),
+    );
+  }
+
+
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -202,27 +234,37 @@ class _ProfilePageState extends State<ProfilePage> {
 
               const SizedBox(height: 30),
 
-              Row(
-                children: const [
-                  //TODO: Dynamic Data
-                  Expanded(
-                    child: StatCard(
-                      label: "Goals",
-                      value: "1",
-                      icon: Icons.rocket_launch_outlined,
-                    ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: StatCard(
-                      label: "Days Active",
-                      value: "14",
-                      icon: Icons.bar_chart_rounded,
-                      isBlue: true,
-                    ),
-                  ),
-                ],
+              StreamBuilder<List<RoadmapModel>>(
+                stream: _userGoalsStream(),
+                builder: (context, snapshot) {
+                  final goals = snapshot.data ?? [];
+
+                  final totalCreated = goals.length;
+                  final totalAchieved =
+                      goals.where((g) => g.progress == 1.0).length;
+
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: StatCard(
+                          label: "Goals\nCreated",
+                          value: "$totalCreated",
+                          icon: Icons.rocket_launch_outlined,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: StatCard(
+                          label: "Goals\nAchieved",
+                          value: "$totalAchieved",
+                          icon: Icons.assignment_turned_in_outlined,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
+
 
               const SizedBox(height: 25),
 
@@ -277,41 +319,82 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  SliverList _userPost(
+  Widget _userPost(
       BuildContext context,
       bool isMobile,
       double screenWidth,
       double screenHeight,
       double screenSize,
       ) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-            (context, index) {
-          final fullName = "$_firstName $_lastName";
-
-          return isMobile
-              ? PostCard(
-            user: fullName.trim().isEmpty ? 'User' : fullName,
-            text: 'Look at my achievement!',
-            like: 20 + index,
-            image: 'assets/images/large_rocket_logo.png',
-            screenwidth: screenWidth,
-            photoUrl: _photoUrl,
-          )
-              : Padding(
-            padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-            child: PostCard(
-              user: fullName.trim().isEmpty ? 'User' : fullName,
-              text: 'Look at my achievement!',
-              like: 20 + index,
-              image: 'assets/images/large_rocket_logo.png',
-              screenwidth: screenWidth,
-              photoUrl: _photoUrl,
+    return StreamBuilder<QuerySnapshot>(
+      stream: _userPostsStream(),
+      builder: (context, snapshot) {
+        // 1️⃣ Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator()),
             ),
           );
-        },
-        childCount: 3,
-      ),
+        }
+
+        // 2️⃣ Error
+        if (snapshot.hasError) {
+          return SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(child: Text("Error loading posts")),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        // 3️⃣ Empty State
+        if (docs.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  "You haven't posted anything yet.",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          );
+        }
+
+        // 4️⃣ REAL LIST
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              final fullName = "$_firstName $_lastName".trim();
+
+              final card = PostCard(
+                user: fullName.isEmpty ? 'User' : fullName,
+                text: data['text'] ?? '',
+                like: data['like'] ?? 0,
+                image: data['image'],
+                screenwidth: screenWidth,
+                photoUrl: _photoUrl,
+              );
+
+              return isMobile
+                  ? card
+                  : Padding(
+                padding:
+                EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+                child: card,
+              );
+            },
+            childCount: docs.length,
+          ),
+        );
+      },
     );
   }
+
 }

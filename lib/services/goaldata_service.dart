@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/journey_model.dart';
+
 // ==========================================
 // 1. MODEL DATA (Updated for Firebase)
 // ==========================================
@@ -145,4 +147,34 @@ class GoalDataService {
     if (_goalsCollection == null) return;
     await _goalsCollection!.doc(id).delete();
   }
+
+  // untuk mengambil isCompleted
+  Stream<List<JourneyItem>> getCompletedJourneyStream() {
+    if (_goalsCollection == null) return Stream.value([]);
+
+    return _goalsCollection!
+        .snapshots()
+        .map((snapshot) {
+      final List<JourneyItem> journeys = [];
+
+      for (var doc in snapshot.docs) {
+        final roadmap = RoadmapModel.fromFirestore(doc);
+
+        for (var step in roadmap.steps) {
+          if (step.isCompleted) {
+            journeys.add(
+              JourneyItem(
+                title: step.title,
+                goalTitle: roadmap.title,
+                time: DateTime.now(), // atau nanti pakai completedAt
+              ),
+            );
+          }
+        }
+      }
+
+      return journeys.reversed.toList(); // terbaru di atas
+    });
+  }
+
 }

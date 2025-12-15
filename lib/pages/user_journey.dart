@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../models/journey_model.dart';
+import '../services/goaldata_service.dart';
+
 class UserJourneyPage extends StatefulWidget{
   const UserJourneyPage({super.key});
 
@@ -10,21 +13,8 @@ class UserJourneyPage extends StatefulWidget{
 
 class _UserJourneyPageState extends State<UserJourneyPage>{
 
-  // dummy data
-  final List<String> userJourney = [
-    "User membuka halaman Home",
-    "User klik tombol Login",
-    "User berhasil login",
-    "User membuka halaman Product",
-    "User menambah item ke cart",
-    "User melakukan checkout",
-    "User membuka halaman Home",
-    "User klik tombol Login",
-    "User berhasil login",
-    "User membuka halaman Product",
-    "User menambah item ke cart",
-    "User melakukan checkout",
-  ];
+  final GoalDataService _dataService = GoalDataService();
+
 
   @override
   Widget build(BuildContext context) {
@@ -36,62 +26,58 @@ class _UserJourneyPageState extends State<UserJourneyPage>{
     bool isMobile = false;
     screenWidth < 768 ? isMobile = true : isMobile = false;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Scrollbar(
-          child: CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: screenHeight * 0.1,
-                    horizontal: 20,
-                  ),
-                  child: Center(
-                    child: Text(
-                      'What Have I Achieved?',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: isMobile ? screenWidth * 0.12 : screenWidth * 0.08,
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+    return StreamBuilder<List<JourneyItem>>(
+      stream: _dataService.getCompletedJourneyStream(),
+      builder: (context, snapshot) {
 
-              SliverList.builder(
-                itemCount: userJourney.length,
-                itemBuilder: (context, index) {
-                  return _textHolder(
-                    userJourney[index],
-                    context,
-                    isMobile,
-                    screenWidth,
-                    screenHeight,
-                    screenSize,
-                  );
-                },
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final journeys = snapshot.data ?? [];
+
+        if (journeys.isEmpty) {
+          return const Scaffold(
+            body: Center(child: Text("No journey yet")),
+          );
+        }
+
+        return Scaffold(
+          body: SafeArea(
+            child: Scrollbar(
+              child: CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _header(context),
+                  ),
+
+                  SliverList.builder(
+                    itemCount: journeys.length,
+                    itemBuilder: (context, index) {
+                      return _textHolder(
+                        journeys[index],
+                        context,
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+
 
   }
 
   // Card template untuk tiap log
   Widget _textHolder(
-      String text,
+      JourneyItem journey,
       BuildContext context,
-      bool isMobile,
-      double screenWidth,
-      double screenHeight,
-      double screenSize,
-      ){
-
+      ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: const BoxDecoration(
@@ -101,28 +87,43 @@ class _UserJourneyPageState extends State<UserJourneyPage>{
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text(text, style: TextStyle(fontSize: screenSize*0.05, fontWeight: FontWeight.w700),), flex: 8),
-              Expanded(child: Text('20 January 2025, 15:00', style: TextStyle(fontSize: 7),), flex: 2),
-            ],
+          Text(
+            journey.title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-
-          SizedBox(height: 10),
-          Row(
-            children: [
-              Text('Comment'),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                //TODO: Add Gesture Detector
-                child: Icon(Icons.arrow_forward_ios, size: 10, weight: 20),
-              ),
-            ],
-          )
+          const SizedBox(height: 4),
+          Text(
+            "From goal: ${journey.goalTitle}",
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
         ],
       ),
     );
   }
 
+  Widget _header(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: screenHeight * 0.1,
+        horizontal: 20,
+      ),
+      child: Center(
+        child: Text(
+          'What Have I Achieved?',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: isMobile ? screenWidth * 0.12 : screenWidth * 0.08,
+            fontWeight: FontWeight.bold,
+            height: 1.2,
+          ),
+        ),
+      ),
+    );
+  }
 }
