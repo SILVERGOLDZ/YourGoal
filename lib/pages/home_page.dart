@@ -16,6 +16,36 @@ class MyGoalPage extends StatefulWidget {
 class _MyGoalPageState extends State<MyGoalPage> {
   final GoalDataService _dataService = GoalDataService();
 
+  void _showDeleteDialog(BuildContext context, RoadmapModel roadmap) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Goal"),
+        content: Text(
+          'Delete goal "${roadmap.title}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+
+              if (roadmap.id != null) {
+                await GoalDataService().deleteRoadmap(roadmap.id!);
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   void _createNewGoal() {
     context.pushNamed('newgoal');
     // Tidak perlu setState karena StreamBuilder akan otomatis update
@@ -130,6 +160,9 @@ class _MyGoalPageState extends State<MyGoalPage> {
                   onTap: () {
                     // Kirim data ke detail
                     context.pushNamed('goalDetail', extra: roadmap);
+                  },
+                  onLongPress: () {
+                    _showDeleteDialog(context, roadmap);
                   },
                   child: GoalCard(
                     title: roadmap.title,
