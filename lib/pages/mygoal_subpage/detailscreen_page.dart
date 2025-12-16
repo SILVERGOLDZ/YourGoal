@@ -12,17 +12,36 @@ class RoadmapDetailScreen extends StatefulWidget {
 
 class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
   late RoadmapModel _currentRoadmap;
+  List<StepModel> _steps = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.roadmap != null) {
       _currentRoadmap = widget.roadmap!;
+      _steps = List.from(_currentRoadmap.steps);
     }
   }
 
   // --- FUNGSI UPDATE FIREBASE ---
   void _markStepAsComplete(StepModel step, String? comment) async {
+    // Validasi: deadline sudah lewat
+    if (step.deadline.isBefore(DateTime.now()) && !_isSameDay(step.deadline, DateTime.now())) {
+      _showIntegrityWarning(
+        "Deadline Already Passed",
+        "The deadline for this step was ${step.deadline.day}/${step.deadline.month}/${step.deadline.year}. "
+            "Are you sure you completed this on time with integrity?",
+            () {
+          _completeStep(step, comment);
+        },
+      );
+      return;
+    }
+
+    _completeStep(step, comment);
+  }
+
+  void _completeStep(StepModel step, String? comment) async {
     setState(() {
       step.isCompleted = true;
       step.status = "Complete";
@@ -33,6 +52,38 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
     await GoalDataService().updateRoadmap(_currentRoadmap);
   }
 
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
+  void _showIntegrityWarning(String title, String message, VoidCallback onConfirm) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onConfirm();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Yes, I'm Sure"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Navigasi ke NewRoadmapScreen dengan data existing
+  void _editRoadmap() {
+    context.push('/newgoal', extra: _currentRoadmap);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +99,13 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         centerTitle: true,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => context.pop()),
         title: Text('Roadmap Detail', style: textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.black),
+            onPressed: _editRoadmap,
+            tooltip: 'Edit Roadmap',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -77,13 +135,22 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             Text("Goals", style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20)),
             const SizedBox(height: 16),
 
-            ListView.builder(
+            ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: _currentRoadmap.steps.length,
+              itemCount: _steps.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex -= 1;
+                  final item = _steps.removeAt(oldIndex);
+                  _steps.insert(newIndex, item);
+                  _currentRoadmap.steps = _steps;
+                });
+                GoalDataService().updateRoadmap(_currentRoadmap);
+              },
               itemBuilder: (context, index) {
-                final step = _currentRoadmap.steps[index];
-                return _buildGoalCard(context, step, index);
+                final step = _steps[index];
+                return _buildGoalCard(context, step, index, key: ValueKey(step.title + index.toString()));
               },
             ),
           ],
@@ -92,10 +159,10 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
     );
   }
 
-  // Widget Card & Popup Logic (Sama, tapi panggil _markStepAsComplete di tombol Finish)
-  Widget _buildGoalCard(BuildContext context, StepModel step, int index) {
+  Widget _buildGoalCard(BuildContext context, StepModel step, int index, {required Key key}) {
     final bool isCompleted = step.isCompleted;
     return Container(
+      key: key,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey[200]!)),
       child: Material(
@@ -109,20 +176,25 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             child: Row(
               children: [
+                Icon(Icons.drag_handle, color: Colors.grey[400]),
+                const SizedBox(width: 8),
                 IgnorePointer(child: Transform.scale(scale: 1.3, child: Checkbox(value: isCompleted, onChanged: (val){}, activeColor: const Color(0xFF1E89EF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))))),
                 const SizedBox(width: 8),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(step.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)), Text(step.status, style: const TextStyle(color: Color(0xFF1E89EF), fontWeight: FontWeight.w500, fontSize: 14)), if (step.isCompleted) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    "Completed at: ${step.completedAt}",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  if (step.comment != null)
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(step.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                  Text(step.status, style: const TextStyle(color: Color(0xFF1E89EF), fontWeight: FontWeight.w500, fontSize: 14)),
+                  if (step.isCompleted) ...[
+                    const SizedBox(height: 4),
                     Text(
-                      "Comment: ${step.comment}",
-                      style: const TextStyle(fontSize: 13),
+                      "Completed at: ${step.completedAt?.day}/${step.completedAt?.month}/${step.completedAt?.year}",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                ]
+                    if (step.comment != null)
+                      Text(
+                        "Comment: ${step.comment}",
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                  ]
                 ]))
               ],
             ),

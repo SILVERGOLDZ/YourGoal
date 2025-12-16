@@ -108,7 +108,11 @@ GoRouter createRouter(Stream<User?> authStream) {
       GoRoute(
         path: AppRoutes.newgoal,
         name: 'newgoal',
-        builder: (context, state) => const NewRoadmapScreen(),
+        builder: (context, state) {
+          // Ambil extra parameter jika ada (untuk edit mode)
+          final existingRoadmap = state.extra as RoadmapModel?;
+          return NewRoadmapScreen(existingRoadmap: existingRoadmap);
+        },
       ),
       GoRoute(
         path: AppRoutes.goalDetail,
