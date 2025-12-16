@@ -135,7 +135,7 @@ class _MyGoalPageState extends State<MyGoalPage> {
                     title: roadmap.title,
                     time: roadmap.time,
                     progress: roadmap.progress,
-                    status: roadmap.status,
+                    status: roadmap.dynamic_status,
                   ),
                 ),
               );
