@@ -13,6 +13,8 @@ import '../Widget/gradient_button.dart';
 import '../Widget/post_card.dart';
 import '../Widget/stat_card.dart';
 import '../services/goaldata_service.dart';
+import '../models/post_model.dart'; // Import Model
+import '../services/post_service.dart'; // Import Service
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -55,6 +57,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PostService _postService = PostService(); // Instance PostService
 
   String? _email;
   String? _firstName;
@@ -80,10 +83,8 @@ class _ProfilePageState extends State<ProfilePage> {
         if (_photoUrl != null) {
           await PaintingBinding.instance.imageCache.evict(NetworkImage(_photoUrl!));
         }
-
-        await user.reload(); // Reload user to get the latest photoURL
+        await user.reload();
         user = _authService.currentUser;
-
         _email = user!.email;
         _photoUrl = user.photoURL;
 
@@ -106,16 +107,15 @@ class _ProfilePageState extends State<ProfilePage> {
         debugPrint("Error fetching data: $e");
       }
     }
-
     if (mounted) setState(() => _isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... (Bagian build TETAP SAMA sampai _userPost) ...
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenSize = (screenWidth < screenHeight ? screenWidth : screenHeight);
-
     bool isMobile = screenWidth < 768;
 
     if (_isLoading) {
@@ -191,35 +191,20 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: CircleAvatar(
                   radius: screenSize * 0.15,
                   backgroundColor: Colors.grey[200],
-                  backgroundImage: _photoUrl != null
-                      ? NetworkImage(_photoUrl!)
+                  backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty)                      ? NetworkImage(_photoUrl!)
                       : const AssetImage('assets/images/default_profile.png') as ImageProvider,
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    displayFirstName,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: screenSize * 0.07),
-                  ),
+                  Text(displayFirstName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07)),
                   const SizedBox(width: 8),
-                  Text(
-                    displayLastName,
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: screenSize * 0.07),
-                  ),
+                  Text(displayLastName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07)),
                 ],
               ),
-
               const SizedBox(height: 10),
-
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
@@ -264,11 +249,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   );
                 },
               ),
-
-
               const SizedBox(height: 25),
-
-              //TODO: Buat page Growth Log dan navigasinya
               GestureDetector(
                 onTap: () => context.pushNamed('journey'),
                 child: const SizedBox(
@@ -294,23 +275,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               GestureDetector(
                 onTap: () => context.pushNamed('collection'),
-                child: const SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: GradientButton(
-                    borderRadius: 16,
-                    child: Center(
-                      child: Text(
-                        "Show My Collection",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                child: const SizedBox(width: double.infinity, height: 55, child: GradientButton(borderRadius: 16, child: Center(child: Text("Show My Collection", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold))))),
               ),
             ],
           ),
@@ -319,75 +284,98 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _userPost(
-      BuildContext context,
-      bool isMobile,
-      double screenWidth,
-      double screenHeight,
-      double screenSize,
-      ) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _userPostsStream(),
-      builder: (context, snapshot) {
-        // 1️⃣ Loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
-        }
+  // --- BAGIAN YANG DIUBAH ---
+  Widget _userPost(BuildContext context, bool isMobile, double screenWidth, double screenHeight, double screenSize) {
+    final user = _authService.currentUser;
+    // Jika user entah kenapa null, return kosong
+    if (user == null) return const SliverToBoxAdapter(child: SizedBox());
 
-        // 2️⃣ Error
+    return StreamBuilder<QuerySnapshot>(
+      stream: _postService.getUserPostsStream(user.uid),
+      builder: (context, snapshot) {
+
+        // 1. LOGIKA ERROR (Penting: Cek ini dulu!)
+        // Jika Firestore butuh Index, errornya akan muncul di sini.
         if (snapshot.hasError) {
+          debugPrint("🔥 FIRESTORE ERROR: ${snapshot.error}");
           return SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(child: Text("Error loading posts")),
-            ),
-          );
-        }
-
-        final docs = snapshot.data?.docs ?? [];
-
-        // 3️⃣ Empty State
-        if (docs.isEmpty) {
-          return const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(
-                child: Text(
-                  "You haven't posted anything yet.",
-                  style: TextStyle(color: Colors.grey),
-                ),
+              padding: const EdgeInsets.all(16.0),
+              child: SelectableText( // Pakai SelectableText agar bisa copy error
+                "Terjadi Error Database:\n${snapshot.error}",
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           );
         }
 
-        // 4️⃣ REAL LIST
+        // 2. LOGIKA LOADING
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+
+        // 3. LOGIKA DATA KOSONG
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                children: [
+                  Center(
+                    child: Text(
+                        "You haven't posted anything yet.",
+                        style: TextStyle(color: Colors.grey[600])
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Tampilkan UID User yang sedang login untuk debug
+                  Text("Login UID: ${user.uid}", style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  const Text("Pastikan field 'userId' di database cocok dengan UID di atas.", style: TextStyle(fontSize: 10, color: Colors.grey)),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // 4. LOGIKA SUKSES (Tampilkan Data)
+        final docs = snapshot.data!.docs;
+
         return SliverList(
           delegate: SliverChildBuilderDelegate(
                 (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              final fullName = "$_firstName $_lastName".trim();
-
-              final card = PostCard(
-                user: fullName.isEmpty ? 'User' : fullName,
-                text: data['text'] ?? '',
-                like: data['like'] ?? 0,
-                image: data['image'],
-                screenwidth: screenWidth,
-                photoUrl: _photoUrl,
+              final post = PostModel.fromMap(
+                  docs[index].id,
+                  docs[index].data() as Map<String, dynamic>
               );
 
-              return isMobile
-                  ? card
-                  : Padding(
-                padding:
-                EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                child: card,
+              bool isLiked = post.likedBy.contains(user.uid);
+              bool isBookmarked = post.savedBy.contains(user.uid);
+              return PostCard(
+                user: post.username,
+                text: post.text,
+                likeCount: post.likeCount,
+                isLiked: isLiked,
+                isBookmarked: isBookmarked, // <-- Pass ke widget
+                image: null,
+                screenwidth: screenWidth,
+                onLikePressed: () => _postService.toggleLike(post.id, post.likedBy),
+                onBookmarkPressed: () {
+                  _postService.toggleBookmark(post.id, post.savedBy);
+
+                  // Opsional: Tampilkan snackbar
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isBookmarked ? "Removed from Collection" : "Saved to Collection"),
+                      duration: const Duration(milliseconds: 500),
+                    ),
+                  );
+                },
               );
             },
             childCount: docs.length,
@@ -396,5 +384,4 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
-
 }

@@ -1,103 +1,123 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-//TODO: Make Clickable like button
-//TODO: Make Clickable bookmark button
-//TODO: Make Clickable Profile image
-//TODO: Visit world button
-
-class PostCard extends StatelessWidget{
+class PostCard extends StatelessWidget {
   final String user;
   final String text;
-  final int like;
+  final int likeCount;        // Ubah dari 'like' menjadi 'likeCount'
+  final bool isLiked;         // Status apakah user sudah like post ini
+  final bool isBookmarked; // <-- TAMBAHAN BARU
+  final VoidCallback onLikePressed;      // Fungsi ketika tombol like ditekan
+  final VoidCallback onBookmarkPressed;  // Fungsi ketika tombol bookmark ditekan
   final String? image;
   final double screenwidth;
-  final String? photoUrl;
 
-  PostCard({
+  const PostCard({
     super.key,
     required this.user,
     required this.text,
-    required this.like,
+    required this.likeCount,
+    required this.isLiked,
+    required this.isBookmarked, // <-- WAJIB DIISI
+    required this.onLikePressed,
+    required this.onBookmarkPressed,
     this.image,
     required this.screenwidth,
-    this.photoUrl,
   });
 
   @override
-  Widget build(BuildContext context){
-
-    bool isMobile = false;
-    screenwidth < 768 ? isMobile = true : isMobile = false;
+  Widget build(BuildContext context) {
+    bool isMobile = screenwidth < 768;
 
     return Card.filled(
-      color: Color(0xFFFFFFFF),
-      // elevation: 2,
+      color: const Color(0xFFFFFFFF),
+      // elevation: 2, // Uncomment jika ingin ada bayangan
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // Profile Row
+            // --- 1. Profile Row ---
             Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 22,
-                  //TODO: Add image
-                  backgroundImage: AssetImage('assets/profile.jpg'),
+                  // Ganti dengan NetworkImage jika nanti sudah ada foto profil user
+                  backgroundImage: AssetImage('assets/images/default_profile.png'),
+                  backgroundColor: Colors.grey, // Warna cadangan
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
                   user,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
             ),
 
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
 
-            // Post Text
+            // --- 2. Post Text ---
             Text(
               text,
-              style: TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15),
             ),
 
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-            // cek image ada diupload di posting atau tidak
-            if (image != null &&  isMobile)...[
-              Image.asset(image!, width: double.infinity,),
-              SizedBox(height: 30),
-            ]
-              else if (!isMobile)...[
+            // --- 3. Image Section (Logic Mobile vs Web) ---
+            if (image != null) ...[
+              if (isMobile)
+                Image.asset(image!, width: double.infinity)
+              else
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 70),
+                  padding: const EdgeInsets.symmetric(horizontal: 70),
                   child: Image.asset(image!),
-                // SizedBox(
-                //   width: screenwidth * 0.5,
-                //   child: Image.asset(image!, width: screenwidth * 0.5),
-                // ),
                 ),
-              SizedBox(height: 30),
-            ]
-            else
-              SizedBox.shrink(),
+              const SizedBox(height: 30),
+            ],
 
-            // Bottom Icons
+            // --- 4. Bottom Icons (Action Buttons) ---
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Group Tombol Like
                   Row(
                     children: [
-                      Icon(Icons.thumb_up_alt_outlined, size: 24),
-                      SizedBox(width: 6),
-                      Text('$like'),
+                      // Menggunakan IconButton agar bisa diklik
+                      InkWell(
+                        onTap: onLikePressed,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Icon(
+                            isLiked ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
+                            size: 24,
+                            color: isLiked ? Colors.blue : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '$likeCount',
+                        style: TextStyle(
+                          color: isLiked ? Colors.blue : Colors.black,
+                          fontWeight: isLiked ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
                     ],
                   ),
-                  Icon(Icons.bookmark_border, size: 24),
+
+                  // Tombol Bookmark
+                  IconButton(
+                      onPressed: onBookmarkPressed,
+                      // Jika isBookmarked = true, icon penuh (saved). Jika tidak, border saja.
+                      icon: Icon(
+                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                        size: 24,
+                        color: isBookmarked ? Colors.black : Colors.grey[700],
+                      ),
+                  ),
                 ],
               ),
             ),
