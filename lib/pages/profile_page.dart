@@ -285,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // --- BAGIAN YANG DIUBAH ---
-  Widget _userPost(BuildContext context, bool isMobile, double screenWidth) {
+  Widget _userPost(BuildContext context, bool isMobile, double screenWidth, double screenHeight, double screenSize) {
     final user = _authService.currentUser;
     // Jika user entah kenapa null, return kosong
     if (user == null) return const SliverToBoxAdapter(child: SizedBox());
@@ -384,4 +384,4 @@ class _ProfilePageState extends State<ProfilePage> {
       },
     );
   }
-}}
+}
