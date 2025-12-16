@@ -72,7 +72,6 @@ class RoadmapModel {
   String? id; // ID Dokumen Firestore (Penting untuk Update/Delete)
   String title;
   String time;
-  String status;
   String description;
   List<StepModel> steps;
 
@@ -80,7 +79,6 @@ class RoadmapModel {
     this.id,
     required this.title,
     required this.time,
-    required this.status,
     required this.description,
     required this.steps,
   });
@@ -92,32 +90,36 @@ class RoadmapModel {
     return completedCount / steps.length;
   }
 
+  String get dynamic_status {
+    return progress == 1.0 ? "Completed" : "In Progress";
+  }
+
   // Ke Map
   Map<String, dynamic> toMap() {
     return {
       'title': title,
       'time': time,
-      'status': status,
       'description': description,
-      'steps': steps.map((x) => x.toMap()).toList(), // Convert list of objects to list of maps
-      'createdAt': FieldValue.serverTimestamp(), // Untuk sorting
+      'steps': steps.map((x) => x.toMap()).toList(),
+      'createdAt': FieldValue.serverTimestamp(),
+      'status': dynamic_status, // computed
     };
   }
 
   // Dari Firestore Snapshot
   factory RoadmapModel.fromFirestore(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>;
     return RoadmapModel(
       id: doc.id,
       title: data['title'] ?? '',
       time: data['time'] ?? '',
-      status: data['status'] ?? 'In Progress',
       description: data['description'] ?? '',
       steps: List<StepModel>.from(
-        (data['steps'] as List<dynamic>? ?? []).map((x) => StepModel.fromMap(x)),
+        (data['steps'] ?? []).map((x) => StepModel.fromMap(x)),
       ),
     );
   }
+
 }
 
 // ==========================================

@@ -48,6 +48,17 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
     return null;
   }
 
+  String _formattedToday() {
+    final now = DateTime.now();
+    const months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    return "${now.day} ${months[now.month - 1]} ${now.year}";
+  }
+
+
+
   Future<void> _saveNewGoal() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Title is required")));
@@ -79,8 +90,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
         RoadmapModel newRoadmap = RoadmapModel(
           title: _titleController.text,
           description: _descController.text.isNotEmpty ? _descController.text : _titleController.text,
-          time: "Just Started",
-          status: "In Progress",
+          time: _formattedToday(),
           steps: _addedSteps,
         );
         await GoalDataService().addRoadmap(newRoadmap);
