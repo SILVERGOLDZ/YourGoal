@@ -7,10 +7,11 @@ class PostCard extends StatelessWidget {
   final bool isLiked;         // Status apakah user sudah like post ini
   final bool isBookmarked; // <-- TAMBAHAN BARU
   final VoidCallback onLikePressed;      // Fungsi ketika tombol like ditekan
-  final VoidCallback onBookmarkPressed;  // Fungsi ketika tombol bookmark ditekan
+  final VoidCallback? onUserTap; // Tambahkan ini
   final VoidCallback? onDeletePressed;
   final String? image;
   final double screenwidth;
+  final VoidCallback onBookmarkPressed;
 
   const PostCard({
     super.key,
@@ -21,6 +22,7 @@ class PostCard extends StatelessWidget {
     required this.isBookmarked, // <-- WAJIB DIISI
     required this.onLikePressed,
     required this.onBookmarkPressed,
+    this.onUserTap, // Tambahkan ke constructor
     this.image,
     this.onDeletePressed, // 2. MASUKKAN KE CONSTRUCTOR
     required this.screenwidth,
@@ -39,39 +41,45 @@ class PostCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // --- 1. Profile Row ---
-            Row(
-              children: [
-                const CircleAvatar(
-                  radius: 22,
-                  // Ganti dengan NetworkImage jika nanti sudah ada foto profil user
-                  backgroundImage: AssetImage('assets/images/default_profile.png'),
-                  backgroundColor: Colors.grey, // Warna cadangan
+            GestureDetector(
+                onTap: onUserTap,
+                behavior: HitTestBehavior.opaque,
+                child:Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 22,
+                      // Ganti dengan NetworkImage jika nanti sudah ada foto profil user
+                      backgroundImage: AssetImage('assets/images/default_profile.png'),
+                      backgroundColor: Colors.grey, // Warna cadangan
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      user,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+
+                    const Spacer(), // Mendorong elemen berikutnya ke paling kanan
+
+                    if (onDeletePressed != null)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                        onPressed: onDeletePressed,
+                        tooltip: 'Hapus Postingan',
+                      ),
+                  ],
                 ),
-                const SizedBox(width: 10),
+            ),
+                const SizedBox(height: 10),
+
+                // --- 2. Post Text ---
                 Text(
-                  user,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  text,
+                  style: const TextStyle(fontSize: 15),
                 ),
-                const Spacer(), // Mendorong elemen berikutnya ke paling kanan
 
-                if (onDeletePressed != null)
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
-                    onPressed: onDeletePressed,
-                    tooltip: 'Hapus Postingan',
-                  ),
-              ],
-            ),
+                const SizedBox(height: 30),
 
-            const SizedBox(height: 10),
 
-            // --- 2. Post Text ---
-            Text(
-              text,
-              style: const TextStyle(fontSize: 15),
-            ),
-
-            const SizedBox(height: 30),
 
             // --- 3. Image Section (Logic Mobile vs Web) ---
             if (image != null) ...[

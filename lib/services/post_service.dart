@@ -42,11 +42,31 @@ class PostService {
     final user = _auth.currentUser;
     if (user == null) return;
 
+    final userDoc = await _db.collection('users').doc(user.uid).get();
+
+    String displayName = "Anonymous";
+
+    if (userDoc.exists) {
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final firstName = userData['firstName'] ?? '';
+      final lastName = userData['lastName'] ?? '';
+
+      // Gabungkan nama
+      displayName = '$firstName $lastName'.trim();
+
+      // Fallback jika nama ternyata kosong
+      if (displayName.isEmpty) {
+        displayName = user.email?.split('@')[0] ?? 'User';
+      }
+    }
+
+    // 2. Simpan postingan dengan nama lengkap di field 'username'
     await _db.collection('posts').add({
       'userId': user.uid,
-      'username': user.email?.split('@')[0] ?? 'Anonymous',
+      'username': displayName, // Sekarang berisi Nama Lengkap
       'text': text,
-      'likedBy': [], // Inisialisasi list kosong
+      'likedBy': [],
+      'savedBy': [], // Pastikan ini ada sesuai model baru Anda
       'timestamp': FieldValue.serverTimestamp(),
     });
   }
