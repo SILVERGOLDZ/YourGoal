@@ -477,7 +477,13 @@ class _ExplorePageState extends State<ExplorePage> {
                 // LOGIKA BARU: Jika postingan berisi roadmap
                 onTap: post.sharedRoadmap != null ? () {
                   final roadmap = RoadmapModel.fromFirestoreData(post.sharedRoadmap!);
-                  context.pushNamed('goalDetail', extra: roadmap);
+                  context.pushNamed(
+                    'goalDetail',
+                    extra: {
+                      'roadmap': roadmap,
+                      'isReadOnly': true,
+                    },
+                  );
                 } : null,
 
                 sharedContent: post.sharedRoadmap != null ? Container(

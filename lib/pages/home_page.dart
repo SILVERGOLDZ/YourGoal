@@ -199,24 +199,33 @@ class _MyGoalPageState extends State<MyGoalPage> {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
                 child: GestureDetector(
-                  onTap: () {
-                    // Kirim data ke detail
-                    context.pushNamed('goalDetail', extra: roadmap);
+                  onTap: () {context.pushNamed(
+                    'goalDetail',
+                    extra: {
+                      'roadmap': roadmap,
+                      'isReadOnly': false,
+                    },
+                  );
                   },
                   onLongPress: () {
                     // Tampilkan pilihan Share atau Delete
-                    showModalBottomSheet(
-                        context: context,
-                        builder: (context) => Wrap(
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        title: const Text("Options", textAlign: TextAlign.center),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             ListTile(
                               leading: const Icon(Icons.share, color: Colors.blue),
                               title: const Text('Share to Explore'),
                               onTap: () {
                                 Navigator.pop(context);
-                                _showShareDialog(roadmap);
+                                _showShareDialog(roadmap); // Memanggil dialog caption share
                               },
                             ),
+                            const Divider(),
                             ListTile(
                               leading: const Icon(Icons.delete, color: Colors.red),
                               title: const Text('Delete Goal'),
@@ -227,6 +236,7 @@ class _MyGoalPageState extends State<MyGoalPage> {
                             ),
                           ],
                         ),
+                      ),
                     );
                   },
                   child: GoalCard(
