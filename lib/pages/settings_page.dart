@@ -7,6 +7,7 @@ import 'package:tes/config/routes.dart';
 import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart';
 import 'package:tes/utils/snackbar_helper.dart';
+import 'package:url_launcher/url_launcher.dart'; // Make sure to run: flutter pub add url_launcher
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -26,6 +27,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String? _photoUrl;
   bool _isLoading = true;
 
+  // State for Notifications Toggle
+  bool _notificationsEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -41,13 +45,13 @@ class _SettingsPageState extends State<SettingsPage> {
     if (user != null) {
       try {
         await user.reload();
-        user = _authService.currentUser; 
+        user = _authService.currentUser;
 
         _email = user!.email;
         _photoUrl = user.photoURL;
 
         DocumentSnapshot doc =
-            await _firestore.collection('users').doc(user.uid).get();
+        await _firestore.collection('users').doc(user.uid).get();
 
         if (doc.exists && mounted) {
           Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -65,26 +69,36 @@ class _SettingsPageState extends State<SettingsPage> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  // --- 2. Function to launch URL ---
+  Future<void> _launchGithub() async {
+    final Uri url = Uri.parse('https://github.com/SILVERGOLDZ/YourGoal');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        showSnackBar('Could not launch $url', isError: true);
+      }
+    }
+  }
+
   void _deleteAccount() async {
     bool confirm = await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-            content: const Text(
-                'Are you sure? This action cannot be undone. All your data will be permanently lost.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Delete Permanently',
-                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-              ),
-            ],
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
+        content: const Text(
+            'Are you sure? This action cannot be undone. All your data will be permanently lost.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
           ),
-        ) ??
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete Permanently',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ) ??
         false;
 
     if (confirm) {
@@ -141,7 +155,7 @@ class _SettingsPageState extends State<SettingsPage> {
       );
     }
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F6F6), // Light grey background
+      backgroundColor: const Color(0xFFF6F6F6),
       body: Stack(
         children: [
           Container(
@@ -151,8 +165,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFA1C4FD), // Light Blue Top
-                  Color(0xFFF6F6F6), // Blends into background
+                  Color(0xFFA1C4FD),
+                  Color(0xFFF6F6F6),
                 ],
               ),
             ),
@@ -179,6 +193,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
                 const SizedBox(height: 20),
+
+                // --- Profile Card ---
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -199,7 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         backgroundImage: _photoUrl != null
                             ? NetworkImage(_photoUrl!)
                             : const AssetImage('assets/images/default_profile.png')
-                                as ImageProvider,
+                        as ImageProvider,
                         backgroundColor: Colors.grey[200],
                       ),
                       const SizedBox(width: 15),
@@ -239,8 +255,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 30),
-                _buildSectionTitle("Preferences"),
+
+                // --- 1. Renamed Header to "General" ---
+                _buildSectionTitle("General"),
                 const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
@@ -249,23 +268,24 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   child: Column(
                     children: [
+                      // --- 2. About MyGoal Link ---
                       _buildListTile(
-                        icon: Icons.shield_outlined,
-                        title: "Account Safety",
+                        icon: Icons.info_outline,
+                        title: "About MyGoal",
                         showDivider: true,
-                        onTap: () =>
-                            showSnackBar('This feature is not implemented yet'),
+                        onTap: _launchGithub,
                       ),
+                      // --- 5. Saved Post Redirect ---
                       _buildListTile(
                         icon: Icons.bookmark_outline,
                         title: "Saved Post",
                         showDivider: false,
-                        onTap: () =>
-                            showSnackBar('This feature is not implemented yet'),
+                        onTap: () => context.push(AppRoutes.collection),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 25),
                 _buildSectionTitle("App Preferences"),
                 const SizedBox(height: 10),
@@ -276,23 +296,41 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   child: Column(
                     children: [
+                      // --- 3. Language Snackbar ---
                       _buildListTile(
                         icon: Icons.translate,
                         title: "Language",
                         showDivider: true,
-                        onTap: () =>
-                            showSnackBar('This feature is not implemented yet'),
+                        onTap: () => showSnackBar('Language selection is coming soon!'),
                       ),
-                      _buildListTile(
-                        icon: Icons.accessibility_new,
-                        title: "Accessibility",
-                        showDivider: false,
-                        onTap: () =>
-                            showSnackBar('This feature is not implemented yet'),
+                      // --- 4. Notification Switch ---
+                      // We use a custom ListTile here for the switch
+                      ListTile(
+                        leading: const Icon(Icons.notifications_outlined, color: Color(0xFF555555)),
+                        title: Text(
+                          "Notifications",
+                          style: GoogleFonts.nunitoSans(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: null,
+                          ),
+                        ),
+                        trailing: Switch(
+                          value: _notificationsEnabled,
+                          activeColor: AppColors.active,
+                          onChanged: (bool value) {
+                            setState(() {
+                              _notificationsEnabled = value;
+                            });
+                            showSnackBar(value ? 'Notifications Enabled' : 'Notifications Disabled');
+                          },
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                       ),
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 25),
                 _buildSectionTitle("Others"),
                 const SizedBox(height: 10),
@@ -340,6 +378,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // Updated Helper to allow optional trailing override
   Widget _buildListTile({
     required IconData icon,
     required String title,
@@ -359,6 +398,7 @@ class _SettingsPageState extends State<SettingsPage> {
               color: color,
             ),
           ),
+          // Default trailing is the arrow, can be changed if needed
           trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
           onTap: onTap,
