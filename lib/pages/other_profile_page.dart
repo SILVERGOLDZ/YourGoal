@@ -7,6 +7,8 @@ import 'package:tes/models/post_model.dart';
 import 'package:tes/models/user_model.dart';
 import 'package:tes/services/post_service.dart';
 import 'package:tes/theme/colors.dart';
+import 'package:tes/Widget/stat_card.dart';
+import 'package:tes/models/goal_model.dart';
 
 class OtherProfilePage extends StatelessWidget {
   final UserModel user;
@@ -36,11 +38,12 @@ class OtherProfilePage extends StatelessWidget {
               ),
 
               // 2. User Info (Identity Only)
+              // 2. User Info (Identity & Stats)
               SliverToBoxAdapter(
                 child: Container(
                   padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
+                  child: Column( // Mulai Column
+                    children: [ // Mulai Children
                       // Avatar
                       Container(
                         decoration: BoxDecoration(
@@ -60,15 +63,9 @@ class OtherProfilePage extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            user.firstName,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07),
-                          ),
+                          Text(user.firstName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07)),
                           const SizedBox(width: 8),
-                          Text(
-                            user.lastName,
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07),
-                          ),
+                          Text(user.lastName, style: TextStyle(fontWeight: FontWeight.bold, fontSize: screenSize * 0.07)),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -84,12 +81,49 @@ class OtherProfilePage extends StatelessWidget {
                           style: TextStyle(fontSize: screenSize * 0.035, color: Colors.grey[700]),
                         ),
                       ),
-                      // Removed: Stats, Journey Button, Collection Button
+
+                      const SizedBox(height: 25), // Jarak sebelum statistik
+
+                      // Statistik Goals
+                      StreamBuilder<List<RoadmapModel>>(
+                        stream: FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .collection('goals')
+                            .snapshots()
+                            .map((snapshot) => snapshot.docs
+                            .map((d) => RoadmapModel.fromFirestore(d))
+                            .toList()),
+                        builder: (context, snapshot) {
+                          final goals = snapshot.data ?? [];
+                          final totalCreated = goals.length;
+                          final totalAchieved = goals.where((g) => g.progress == 1.0).length;
+
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: StatCard(
+                                  label: "Goals\nCreated",
+                                  value: "$totalCreated",
+                                  icon: Icons.rocket_launch_outlined,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: StatCard(
+                                  label: "Goals\nAchieved",
+                                  value: "$totalAchieved",
+                                  icon: Icons.assignment_turned_in_outlined,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
-
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 10, 24, 10),

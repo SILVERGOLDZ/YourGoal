@@ -201,31 +201,20 @@ class _NotificationPageState extends State<NotificationPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center, // Memastikan semua anak Row di tengah
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Notifications',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                ),
-              ),
+          const Text(
+            'Notifications',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Colors.black,
             ),
           ),
-          const SizedBox(width: 48),
         ],
       ),
     );
   }
-
   // --- Widget: Card Item ---
   Widget _buildNotificationCard(NotificationItem item) {
     // Format tanggal simpel

@@ -9,6 +9,8 @@ import 'package:tes/services/auth/user_service.dart';
 import 'package:tes/services/post_service.dart';
 import 'package:tes/theme/colors.dart';
 
+import '../models/goal_model.dart';
+
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
 
@@ -377,6 +379,7 @@ class _ExplorePageState extends State<ExplorePage> {
               final user = users[index];
               final hasImage = user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty;
 
+
               return Card(
                 color: Colors.transparent,
                 elevation: 0,
@@ -471,6 +474,38 @@ class _ExplorePageState extends State<ExplorePage> {
                 },
                 onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
                 onUserTap: () => _navigateToUserProfile(post.userId),
+                // LOGIKA BARU: Jika postingan berisi roadmap
+                onTap: post.sharedRoadmap != null ? () {
+                  final roadmap = RoadmapModel.fromFirestoreData(post.sharedRoadmap!);
+                  context.pushNamed('goalDetail', extra: roadmap);
+                } : null,
+
+                sharedContent: post.sharedRoadmap != null ? Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.map_outlined, color: Colors.blue),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(post.sharedRoadmap!['title'] ?? '',
+                                style: const TextStyle(fontWeight: FontWeight.bold)),
+                            const Text("Tap to view this roadmap journey",
+                                style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right, color: Colors.blue),
+                    ],
+                  ),
+                ) : null,
               );
             },
             childCount: docs.length,

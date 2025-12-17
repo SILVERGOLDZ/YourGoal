@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class PostCard extends StatelessWidget {
   final String user;
   final String text;
-  final int likeCount;        // Ubah dari 'like' menjadi 'likeCount'
-  final bool isLiked;         // Status apakah user sudah like post ini
-  final bool isBookmarked; // <-- TAMBAHAN BARU
-  final VoidCallback onLikePressed;      // Fungsi ketika tombol like ditekan
-  final VoidCallback? onUserTap; // Tambahkan ini
+  final int likeCount;
+  final bool isLiked;
+  final bool isBookmarked;
+  final VoidCallback onLikePressed;
+  final VoidCallback? onUserTap;
   final VoidCallback? onDeletePressed;
+  final VoidCallback? onTap; // <--- Tambahkan ini
+  final Widget? sharedContent; // <--- Tambahkan ini untuk UI Roadmap
   final String? image;
   final double screenwidth;
   final VoidCallback onBookmarkPressed;
@@ -19,12 +21,14 @@ class PostCard extends StatelessWidget {
     required this.text,
     required this.likeCount,
     required this.isLiked,
-    required this.isBookmarked, // <-- WAJIB DIISI
+    required this.isBookmarked,
     required this.onLikePressed,
     required this.onBookmarkPressed,
-    this.onUserTap, // Tambahkan ke constructor
+    this.onUserTap,
+    this.onTap, // <--- Masukkan ke constructor
+    this.sharedContent, // <--- Masukkan ke constructor
     this.image,
-    this.onDeletePressed, // 2. MASUKKAN KE CONSTRUCTOR
+    this.onDeletePressed,
     required this.screenwidth,
   });
 
@@ -34,112 +38,95 @@ class PostCard extends StatelessWidget {
 
     return Card.filled(
       color: const Color(0xFFFFFFFF),
-      // elevation: 2, // Uncomment jika ingin ada bayangan
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- 1. Profile Row ---
-            GestureDetector(
+      clipBehavior: Clip.antiAlias, // Agar efek splash InkWell rapi
+      child: InkWell( // <--- Bungkus dengan InkWell agar kartu bisa diklik
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- 1. Profile Row ---
+              GestureDetector(
                 onTap: onUserTap,
                 behavior: HitTestBehavior.opaque,
-                child:Row(
+                child: Row(
                   children: [
                     const CircleAvatar(
                       radius: 22,
-                      // Ganti dengan NetworkImage jika nanti sudah ada foto profil user
                       backgroundImage: AssetImage('assets/images/default_profile.png'),
-                      backgroundColor: Colors.grey, // Warna cadangan
+                      backgroundColor: Colors.grey,
                     ),
                     const SizedBox(width: 10),
                     Text(
                       user,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-
-                    const Spacer(), // Mendorong elemen berikutnya ke paling kanan
-
+                    const Spacer(),
                     if (onDeletePressed != null)
                       IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
                         onPressed: onDeletePressed,
-                        tooltip: 'Hapus Postingan',
                       ),
                   ],
                 ),
-            ),
-                const SizedBox(height: 10),
+              ),
+              const SizedBox(height: 10),
 
-                // --- 2. Post Text ---
-                Text(
-                  text,
-                  style: const TextStyle(fontSize: 15),
-                ),
+              // --- 2. Post Text ---
+              Text(text, style: const TextStyle(fontSize: 15)),
 
+              // --- TAMBAHAN: Shared Roadmap UI ---
+              if (sharedContent != null) ...[
+                const SizedBox(height: 12),
+                sharedContent!,
+              ],
+
+              const SizedBox(height: 20),
+
+              // --- 3. Image Section ---
+              if (image != null) ...[
+                // ... (tetap sama seperti kode lama Anda)
                 const SizedBox(height: 30),
+              ],
 
-
-
-            // --- 3. Image Section (Logic Mobile vs Web) ---
-            if (image != null) ...[
-              if (isMobile)
-                Image.asset(image!, width: double.infinity)
-              else
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 70),
-                  child: Image.asset(image!),
-                ),
-              const SizedBox(height: 30),
-            ],
-
-            // --- 4. Bottom Icons (Action Buttons) ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Group Tombol Like
-                  Row(
-                    children: [
-                      // Menggunakan IconButton agar bisa diklik
-                      InkWell(
-                        onTap: onLikePressed,
-                        borderRadius: BorderRadius.circular(50),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Icon(
-                            isLiked ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
-                            size: 24,
-                            color: isLiked ? Colors.blue : Colors.grey[700],
+              // --- 4. Bottom Icons ---
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: onLikePressed,
+                          borderRadius: BorderRadius.circular(50),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              isLiked ? Icons.thumb_up_alt : Icons.thumb_up_alt_outlined,
+                              size: 24,
+                              color: isLiked ? Colors.blue : Colors.grey[700],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '$likeCount',
-                        style: TextStyle(
-                          color: isLiked ? Colors.blue : Colors.black,
-                          fontWeight: isLiked ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Tombol Bookmark
-                  IconButton(
+                        const SizedBox(width: 6),
+                        Text('$likeCount', style: TextStyle(color: isLiked ? Colors.blue : Colors.black)),
+                      ],
+                    ),
+                    IconButton(
                       onPressed: onBookmarkPressed,
-                      // Jika isBookmarked = true, icon penuh (saved). Jika tidak, border saja.
                       icon: Icon(
                         isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                         size: 24,
                         color: isBookmarked ? Colors.black : Colors.grey[700],
                       ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -8,6 +8,7 @@ class PostModel {
   final List<String> likedBy;
   final List<String> savedBy;
   final Timestamp timestamp;
+  final Map<String, dynamic>? sharedRoadmap;
 
   PostModel({
     required this.id,
@@ -17,6 +18,7 @@ class PostModel {
     required this.likedBy,
     required this.savedBy,
     required this.timestamp,
+    this.sharedRoadmap, // Masukkan ke constructor
   });
 
   int get likeCount => likedBy.length;
@@ -30,6 +32,7 @@ class PostModel {
       likedBy: List<String>.from(map['likedBy'] ?? []),
       savedBy: List<String>.from(map['savedBy'] ?? []),
       timestamp: map['timestamp'] ?? Timestamp.now(),
+      sharedRoadmap: map['sharedRoadmap'], // Ambil data roadmap jika ada
     );
   }
 }

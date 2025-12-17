@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/goal_model.dart';
+
 class PostService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -37,7 +39,30 @@ class PostService {
     return _db.collection('posts').doc(postId).snapshots();
   }
 
+  Future<void> shareRoadmapAsPost(String text, RoadmapModel roadmap) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
 
+    // 1. Ambil nama lengkap user untuk ditampilkan di postingan
+    final userDoc = await _db.collection('users').doc(user.uid).get();
+    String displayName = "User";
+
+    if (userDoc.exists) {
+      final userData = userDoc.data() as Map<String, dynamic>;
+      displayName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+    }
+
+    // 2. Simpan postingan dengan tambahan field 'sharedRoadmap'
+    await _db.collection('posts').add({
+      'userId': user.uid,
+      'username': displayName,
+      'text': text,
+      'likedBy': [],
+      'savedBy': [],
+      'timestamp': FieldValue.serverTimestamp(),
+      'sharedRoadmap': roadmap.toMap(), // Mengonversi model roadmap menjadi Map
+    });
+  }
   Future<void> addPost(String text) async {
     final user = _auth.currentUser;
     if (user == null) return;
