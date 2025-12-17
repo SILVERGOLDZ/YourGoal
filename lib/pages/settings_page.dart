@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tes/Widget/half_gradient_background.dart';
 import 'package:tes/config/routes.dart';
 import 'package:tes/services/auth/auth_service.dart';
 import 'package:tes/theme/colors.dart';
@@ -158,19 +159,7 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: const Color(0xFFF6F6F6),
       body: Stack(
         children: [
-          Container(
-            height: 250,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFA1C4FD),
-                  Color(0xFFF6F6F6),
-                ],
-              ),
-            ),
-          ),
+          const BackgroundDecoration(),
           SafeArea(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
