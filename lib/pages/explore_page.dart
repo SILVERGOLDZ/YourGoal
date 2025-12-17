@@ -103,11 +103,11 @@ class _ExplorePageState extends State<ExplorePage> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: const Text("Buat Postingan Baru"),
+              title: const Text("Create New Post"),
               content: TextField(
                 controller: _textController,
                 decoration: const InputDecoration(
-                  hintText: "Apa yang sedang kamu pikirkan?",
+                  hintText: "What's on your mind?",
                   border: OutlineInputBorder(),
                   contentPadding: EdgeInsets.all(12),
                 ),
@@ -129,7 +129,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       Navigator.pop(dialogContext);
                       _textController.clear();
                     },
-                    child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+                    child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
                   ),
                   ElevatedButton(
                     onPressed: () async {
@@ -157,7 +157,7 @@ class _ExplorePageState extends State<ExplorePage> {
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text("Posting"),
+                    child: const Text("Post"),
                   ),
                 ]
               ],
@@ -173,12 +173,12 @@ class _ExplorePageState extends State<ExplorePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Hapus Postingan?"),
-          content: const Text("Postingan ini akan dihapus secara permanen."),
+          title: const Text("Delete Post?"),
+          content: const Text("This post will be permanently deleted."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
@@ -186,19 +186,21 @@ class _ExplorePageState extends State<ExplorePage> {
                 try {
                   await _postService.deletePost(postId);
                   if (mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Postingan berhasil dihapus")),
+                      const SnackBar(content: Text("Post deleted successfully")),
                     );
                   }
                 } catch (e) {
                   if (mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Gagal menghapus: $e")),
+                      SnackBar(content: Text("Failed to delete: $e")),
                     );
                   }
                 }
               },
-              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -244,7 +246,7 @@ class _ExplorePageState extends State<ExplorePage> {
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: const Color(0x80E3E3E3),
-                          hintText: 'Cari pengguna...',
+                          hintText: 'Search users...',
                           prefixIcon: isSearchMode ? null : const Icon(Icons.search),
                           enabledBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(30)),
@@ -310,7 +312,7 @@ class _ExplorePageState extends State<ExplorePage> {
           height: 300,
           child: Center(
             child: Text(
-              "Mulai ketik untuk mencari...",
+              "Start typing to search...",
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           ),
@@ -339,7 +341,7 @@ class _ExplorePageState extends State<ExplorePage> {
           return const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: Center(child: Text("Pengguna tidak ditemukan.")),
+              child: Center(child: Text("User not found.")),
             ),
           );
         }
@@ -401,7 +403,7 @@ class _ExplorePageState extends State<ExplorePage> {
         final docs = snapshot.data?.docs ?? [];
 
         if (docs.isEmpty) {
-          return const SliverToBoxAdapter(child: Center(child: Text("Belum ada postingan.")));
+          return const SliverToBoxAdapter(child: Center(child: Text("No posts yet.")));
         }
 
         return SliverList(
@@ -437,8 +439,8 @@ class _ExplorePageState extends State<ExplorePage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(isBookmarked
-                          ? "Dihapus dari koleksi"
-                          : "Disimpan ke koleksi"),
+                          ? "Removed from collection"
+                          : "Saved to collection"),
                       duration: const Duration(milliseconds: 500),
                     ),
                   );

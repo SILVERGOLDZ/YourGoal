@@ -8,7 +8,7 @@ import 'package:tes/utils/snackbar_helper.dart';
 import '../../services/auth/user_service.dart';
 
 class RegisterPage extends StatefulWidget {
-  // Tidak butuh parameter extraData lagi
+  // No longer needs extraData parameter
   const RegisterPage({super.key});
 
   @override
@@ -39,14 +39,14 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _register() async {
-    // Validasi form terlebih dahulu
+    // Validate the form first
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // 1. Lakukan Registrasi Auth (Email & Password)
+    // 1. Perform Auth Registration (Email & Password)
     String? error = await _authService.registerWithEmailPassword(
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -56,12 +56,12 @@ class _RegisterPageState extends State<RegisterPage> {
     );
 
     if (error == null) {
-      // --- TAMBAHAN PENTING ---
-      // 2. Jika Auth sukses, ambil User ID yang baru dibuat
+      // --- IMPORTANT ADDITION ---
+      // 2. If Auth is successful, get the newly created User ID
       User? currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser != null) {
-        // 3. Simpan data detail ke Firestore
+        // 3. Save detail data to Firestore
         try {
           await UserService().createUser(
             currentUser,
@@ -70,21 +70,21 @@ class _RegisterPageState extends State<RegisterPage> {
             _phoneController.text.trim(),
           );
 
-          // 4. Sukses Auth & Database
+          // 4. Auth & Database Success
           if (mounted) {
-            showSnackBar(context, 'Akun berhasil dibuat. Silakan periksa email Anda untuk verifikasi.');
-            // GoRouter otomatis handle navigasi (listener auth state)
-            // Atau paksa pindah jika perlu: context.goNamed('login');
+            showSnackBar('Account created successfully. Please check your email for verification.');
+            // GoRouter automatically handles navigation (auth state listener)
+            // Or force navigation if needed: context.goNamed('login');
           }
         } catch (e) {
-          // Gagal simpan ke database (tapi auth sudah jadi)
-          if (mounted) showSnackBar(context, "Gagal menyimpan data profil: $e", isError: true);
+          // Failed to save to database (but auth is already created)
+          if (mounted) showSnackBar("Failed to save profile data: $e", isError: true);
         }
       }
       // ------------------------
     } else {
-      // GAGAL AUTH
-      if (mounted) showSnackBar(context, error, isError: true);
+      // AUTH FAILED
+      if (mounted) showSnackBar(error, isError: true);
     }
 
     if (mounted) {
@@ -191,7 +191,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) return 'Password cannot be empty';
-                        //TODO : UBAH INI KALO UD RILIS
+                        //TODO: CHANGE THIS ON RELEASE
                         if (value.length < 6) {
                           return 'Password must be at least 6 characters';
                         }
@@ -212,7 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 40),
 
-                    // Tombol Aksi
+                    // Action Button
                     ElevatedButton(
                       onPressed: _isLoading ? null : _register,
                       style: ElevatedButton.styleFrom(

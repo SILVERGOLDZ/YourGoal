@@ -46,12 +46,12 @@ class _LoginPageState extends State<LoginPage> {
         });
 
         if (userCredential == null) {
-          showSnackBar(context, 'Login failed. Please check your email or password.', isError: true);
+          showSnackBar('Login failed. Please check your email or password.', isError: true);
         } else {
           // Check if email is verified
           if (userCredential.user != null && !userCredential.user!.emailVerified) {
             await _authService.signOut(); // Sign out user
-            showSnackBar(context, 'Please verify your email before logging in.', isError: true);
+            showSnackBar('Please verify your email before logging in.', isError: true);
           }
           // If successful and verified, GoRouter will automatically redirect
         }
@@ -62,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
   // --- Dummy Logic for Social Login ---
   void _onSocialLoginPressed(String providerName) {
     // Just show a Snackbar
-    showSnackBar(context, 'Login with $providerName is not yet available.', isError: false);
+    showSnackBar('Login with $providerName is not yet available.', isError: false);
   }
 
   void _goToRegister() {
@@ -113,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Login to continue', // DIUBAH
+                        'Login to continue',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: AppColors.inactive,
@@ -130,8 +130,8 @@ class _LoginPageState extends State<LoginPage> {
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
                         validator: (value) {
-                          if (value == null || value.isEmpty) return 'Email cannot be empty'; // DIUBAH
-                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) return 'Please enter a valid email'; // DIUBAH
+                          if (value == null || value.isEmpty) return 'Email cannot be empty';
+                          if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value)) return 'Please enter a valid email';
                           return null;
                         },
                       ),
