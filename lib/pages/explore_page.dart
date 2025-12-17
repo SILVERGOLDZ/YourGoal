@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tes/Widget/post_card.dart';
 import 'package:tes/models/post_model.dart';
+import 'package:tes/models/user_model.dart';
+import 'package:tes/services/auth/user_service.dart';
 import 'package:tes/services/post_service.dart';
+import 'package:tes/theme/colors.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -14,25 +19,88 @@ class ExplorePage extends StatefulWidget {
 class _ExplorePageState extends State<ExplorePage> {
   final ScrollController _scrollController = ScrollController();
   final PostService _postService = PostService();
+  final UserService _userService = UserService();
 
-  // Controller untuk input text di dalam dialog
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  Future<List<UserModel>>? _searchResults;
+  String _query = "";
+  Timer? _debounce;
+
   final TextEditingController _textController = TextEditingController();
-  bool _isPosting = false; // Status loading saat posting
+  bool _isPosting = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 1. Listen for Focus changes (to update UI when keyboard opens/closes)
+    _searchFocusNode.addListener(() {
+      setState(() {});
+    });
+
+    // 2. Unified Search Logic
+    _searchController.addListener(_onSearchChanged);
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _textController.dispose();
     _scrollController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final newQuery = _searchController.text;
+
+    // CRITICAL FIX: Always cancel the previous timer immediately.
+    // This prevents an old search from firing after you have cleared the text.
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    setState(() {
+      _query = newQuery;
+    });
+
+    if (newQuery.trim().isEmpty) {
+      // If empty, clear results immediately (no delay needed)
+      setState(() {
+        _searchResults = null;
+      });
+      return;
+    }
+
+    // Start a new timer for the search (Debounce)
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted && newQuery.trim().isNotEmpty) {
+        setState(() {
+          _searchResults = _userService.searchUsers(newQuery.trim());
+        });
+      }
+    });
+  }
+
+  void _exitSearchMode() {
+    // Cancel any pending search timers
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    setState(() {
+      _searchController.clear(); // This triggers the listener to clear results too
+      _query = "";
+      _searchResults = null;
+      _searchFocusNode.unfocus(); // Close keyboard
+    });
   }
 
   void _showCreatePostDialog() {
     showDialog(
       context: context,
-      barrierDismissible: !_isPosting, // Cegah tutup dialog jika sedang loading
-      builder: (context) {
+      barrierDismissible: !_isPosting,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          // StatefulBuilder agar kita bisa update UI di dalam dialog (loading)
           builder: (context, setStateDialog) {
             return AlertDialog(
               title: const Text("Buat Postingan Baru"),
@@ -44,7 +112,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   contentPadding: EdgeInsets.all(12),
                 ),
                 maxLines: 4,
-                enabled: !_isPosting, // Disable input saat loading
+                enabled: !_isPosting,
               ),
               actions: [
                 if (_isPosting)
@@ -58,35 +126,30 @@ class _ExplorePageState extends State<ExplorePage> {
                 else ...[
                   TextButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.pop(dialogContext);
                       _textController.clear();
                     },
-                    child: const Text("Batal",
-                        style: TextStyle(color: Colors.grey)),
+                    child: const Text("Batal", style: TextStyle(color: Colors.grey)),
                   ),
                   ElevatedButton(
                     onPressed: () async {
                       final text = _textController.text.trim();
+                      if (text.isEmpty) return;
 
-                      if (text.isNotEmpty) {
-                        // 1. Ubah state menjadi loading
-                        setStateDialog(() => _isPosting = true);
+                      setStateDialog(() => _isPosting = true);
 
-                        try {
-                          // 2. Kirim ke Firebase via Service
-                          await _postService.addPost(text);
+                      try {
+                        await _postService.addPost(text);
+                        _textController.clear();
 
-                          // 3. Reset & Tutup Dialog jika sukses
-                          _textController.clear();
-                          if (context.mounted) Navigator.pop(context);
-                        } catch (e) {
-                          // Handle error jika perlu
-                          debugPrint("Error posting: $e");
-                        } finally {
-                          // Matikan loading (jika dialog belum tertutup karena error)
-                          if (context.mounted) {
-                            setStateDialog(() => _isPosting = false);
-                          }
+                        // FIX: Async Gap Warning
+                        // Check if the dialog is still mounted before using context
+                        if (!dialogContext.mounted) return;
+                        Navigator.pop(dialogContext);
+                      } catch (e) {
+                        debugPrint("Error posting: $e");
+                        if (dialogContext.mounted) {
+                          setStateDialog(() => _isPosting = false);
                         }
                       }
                     },
@@ -104,6 +167,7 @@ class _ExplorePageState extends State<ExplorePage> {
       },
     );
   }
+
   void _confirmDelete(String postId) {
     showDialog(
       context: context,
@@ -113,12 +177,12 @@ class _ExplorePageState extends State<ExplorePage> {
           content: const Text("Postingan ini akan dihapus secara permanen."),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Tutup dialog
+              onPressed: () => Navigator.pop(context),
               child: const Text("Batal", style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context); // Tutup dialog dulu
+                Navigator.pop(context);
                 try {
                   await _postService.deletePost(postId);
                   if (mounted) {
@@ -141,154 +205,251 @@ class _ExplorePageState extends State<ExplorePage> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
-    // Ambil User ID saat ini untuk pengecekan like & bookmark
-    final currentUid = _postService.currentUserId;
-
     final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      body: SafeArea(
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            // --- HEADER SEARCH ---
-            SliverAppBar(
-              floating: true,
-              pinned: false,
-              toolbarHeight: screenHeight * 0.10,
-              backgroundColor: Colors.white,
-              title: TextField(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: const Color(0x80E3E3E3),
-                  hintText: 'Cari...',
-                  prefixIcon: const Icon(Icons.search),
-                  enabledBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: Colors.blue),
-                  ),
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                  ),
+    // Logic: We are in "Search Mode" if we have text OR the keyboard is open
+    final bool isSearchMode = _query.trim().isNotEmpty || _searchFocusNode.hasFocus;
+
+    return PopScope(
+      canPop: !isSearchMode,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _exitSearchMode();
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                toolbarHeight: screenHeight * 0.10,
+                backgroundColor: Colors.white,
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    if (isSearchMode)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back, color: Colors.black),
+                        onPressed: _exitSearchMode,
+                      ),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: const Color(0x80E3E3E3),
+                          hintText: 'Cari pengguna...',
+                          prefixIcon: isSearchMode ? null : const Icon(Icons.search),
+                          enabledBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                            borderSide: BorderSide(color: Colors.blue),
+                          ),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(30)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            // --- LIST POSTINGAN ---
-            StreamBuilder<QuerySnapshot>(
-              stream: _postService.getPostsStream(),
-              builder: (context, snapshot) {
-                // 1. Loading State
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const SliverToBoxAdapter(
-                      child: Center(child: CircularProgressIndicator()));
-                }
-
-                // 2. Error / Empty State
-                if (snapshot.hasError) {
-                  return SliverToBoxAdapter(child: Text("Error: ${snapshot.error}"));
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-
-                if (docs.isEmpty) {
-                  return const SliverToBoxAdapter(child: Center(child: Text("Belum ada postingan.")));
-                }
-
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final post = PostModel.fromMap(
-                          docs[index].id,
-                          docs[index].data() as Map<String, dynamic>
-                      );
-
-                      // --- LOGIKA UTAMA PERUBAHAN DI SINI ---
-                      bool isLiked = false;
-                      bool isBookmarked = false; // Default false
-                      bool isOwner = false;
-                      // Cek jika user login, update status based on ID
-                      if (currentUid != null) {
-                        isLiked = post.likedBy.contains(currentUid);
-                        isBookmarked = post.savedBy.contains(currentUid); // <-- Pakai currentUid, bukan user.uid
-                        isOwner = post.userId == currentUid; // <--- Cek Ownership
-                      }
-
-                      return PostCard(
-                        user: post.username,
-                        text: post.text,
-                        likeCount: post.likeCount,
-                        isLiked: isLiked,
-                        isBookmarked: isBookmarked, // <-- Pass ke widget
-                        screenwidth: screenWidth,
-                        image: null,
-
-                        // AKSI KETIKA TOMBOL LIKE DITEKAN
-                        onLikePressed: () {
-                          _postService.toggleLike(post.id, post.likedBy);
-                        },
-
-                        // AKSI KETIKA TOMBOL BOOKMARK DITEKAN
-                        onBookmarkPressed: () {
-                          _postService.toggleBookmark(post.id, post.savedBy);
-
-                          // Tampilkan snackbar (feedback visual)
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(isBookmarked
-                                  ? "Dihapus dari koleksi"
-                                  : "Disimpan ke koleksi"),
-                              duration: const Duration(milliseconds: 500),
-                            ),
-                          );
-                        },
-                        onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
-                      );
-                    },
-                    childCount: docs.length,
-                  ),
-                );
-              },
-            ),
-          ],
+              if (isSearchMode)
+                _buildSearchResults()
+              else
+                _buildPostsList(),
+            ],
+          ),
         ),
-      ),
-
-      // --- TOMBOL TAMBAH POSTINGAN ---
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80.0),
-        child: SizedBox(
-          width: 70,
-          height: 70,
-          child: FloatingActionButton(
-            onPressed: _showCreatePostDialog,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            child: Image.asset(
-              'assets/images/+ btn.png',
-              fit: BoxFit.cover,
-              errorBuilder: (ctx, err, stack) => Container(
-                width: 70,
-                height: 70,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFF1E89EF),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: !isSearchMode
+            ? Padding(
+          padding: const EdgeInsets.only(bottom: 80.0),
+          child: SizedBox(
+            width: 70,
+            height: 70,
+            child: FloatingActionButton(
+              onPressed: _showCreatePostDialog,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Image.asset(
+                'assets/images/+ btn.png',
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, stack) => Container(
+                  width: 70,
+                  height: 70,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0xFF1E89EF),
+                  ),
+                  child: const Icon(Icons.add, size: 40, color: Colors.white),
                 ),
-                child: const Icon(Icons.add, size: 40, color: Colors.white),
               ),
             ),
           ),
-        ),
+        )
+            : null,
       ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    // Case 1: Search bar is active, but text is empty
+    if (_query.trim().isEmpty) {
+      return const SliverToBoxAdapter(
+        child: SizedBox(
+          height: 300,
+          child: Center(
+            child: Text(
+              "Mulai ketik untuk mencari...",
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Case 2: Searching...
+    return FutureBuilder<List<UserModel>>(
+      future: _searchResults,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: 20),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          );
+        }
+        if (snapshot.hasError) {
+          return SliverToBoxAdapter(
+            child: Center(child: Text("Error: ${snapshot.error}")),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: Text("Pengguna tidak ditemukan.")),
+            ),
+          );
+        }
+
+        final users = snapshot.data!;
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              final user = users[index];
+              final hasImage = user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty;
+
+              return Card(
+                color: Colors.transparent,
+                elevation: 0,
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    radius: 25,
+                    backgroundImage: hasImage ? NetworkImage(user.profileImageUrl!) : null,
+                    child: !hasImage ? const Icon(Icons.person) : null,
+                  ),
+                  title: Text(
+                    '${user.firstName} ${user.lastName}',
+                    style: const TextStyle(color: AppColors.active, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(user.email),
+                  onTap: () {
+                    context.pushNamed(
+                      'otherProfile', // Must match the name in routes.dart
+                      extra: user,    // Pass the user object
+                    );
+                  },
+                ),
+              );
+            },
+            childCount: users.length,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPostsList() {
+    final currentUid = _postService.currentUserId;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: _postService.getPostsStream(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SliverToBoxAdapter(
+              child: Center(child: CircularProgressIndicator()));
+        }
+
+        if (snapshot.hasError) {
+          return SliverToBoxAdapter(child: Text("Error: ${snapshot.error}"));
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+
+        if (docs.isEmpty) {
+          return const SliverToBoxAdapter(child: Center(child: Text("Belum ada postingan.")));
+        }
+
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (context, index) {
+              final post = PostModel.fromMap(
+                  docs[index].id, docs[index].data() as Map<String, dynamic>);
+
+              bool isLiked = false;
+              bool isBookmarked = false;
+              bool isOwner = false;
+
+              if (currentUid != null) {
+                isLiked = post.likedBy.contains(currentUid);
+                isBookmarked = post.savedBy.contains(currentUid);
+                isOwner = post.userId == currentUid;
+              }
+
+              return PostCard(
+                user: post.username,
+                text: post.text,
+                likeCount: post.likeCount,
+                isLiked: isLiked,
+                isBookmarked: isBookmarked,
+                screenwidth: screenWidth,
+                image: null,
+                onLikePressed: () {
+                  _postService.toggleLike(post.id, post.likedBy);
+                },
+                onBookmarkPressed: () {
+                  _postService.toggleBookmark(post.id, post.savedBy);
+                  ScaffoldMessenger.of(context).clearSnackBars();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isBookmarked
+                          ? "Dihapus dari koleksi"
+                          : "Disimpan ke koleksi"),
+                      duration: const Duration(milliseconds: 500),
+                    ),
+                  );
+                },
+                onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
+              );
+            },
+            childCount: docs.length,
+          ),
+        );
+      },
     );
   }
 }

@@ -9,6 +9,7 @@ class UserModel {
   final String authMethod;
   final bool isActive;
   final Timestamp? createdAt;
+  final String? profileImageUrl;
 
   UserModel({
     required this.uid,
@@ -19,6 +20,7 @@ class UserModel {
     this.authMethod = 'email',
     this.isActive = false,
     this.createdAt,
+    this.profileImageUrl,
   });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
@@ -32,6 +34,7 @@ class UserModel {
       authMethod: data['authMethod'] ?? 'email',
       isActive: data['isActive'] ?? false,
       createdAt: data['createdAt'],
+      profileImageUrl: data['profileImageUrl'],
     );
   }
 
@@ -45,6 +48,7 @@ class UserModel {
       'authMethod': authMethod,
       'isActive': isActive,
       'createdAt': createdAt ?? FieldValue.serverTimestamp(),
+      'profileImageUrl': profileImageUrl,
     };
   }
 }

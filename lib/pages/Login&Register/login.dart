@@ -47,8 +47,14 @@ class _LoginPageState extends State<LoginPage> {
 
         if (userCredential == null) {
           showSnackBar(context, 'Login failed. Please check your email or password.', isError: true);
+        } else {
+          // Check if email is verified
+          if (userCredential.user != null && !userCredential.user!.emailVerified) {
+            await _authService.signOut(); // Sign out user
+            showSnackBar(context, 'Please verify your email before logging in.', isError: true);
+          }
+          // If successful and verified, GoRouter will automatically redirect
         }
-        // If successful, GoRouter will automatically redirect
       }
     }
   }
