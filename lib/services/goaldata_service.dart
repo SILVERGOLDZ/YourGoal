@@ -22,7 +22,6 @@ class GoalDataService {
   // CREATE: Tambah Goal Baru
   Future<void> addRoadmap(RoadmapModel roadmap) async {
     if (_goalsCollection == null) return;
-    await _goalsCollection!.add(roadmap.toMap());
     DocumentReference docRef = await _goalsCollection!.add(roadmap.toMap());
     _scheduleNotificationsForRoadmap(roadmap, docRef.id);
   }

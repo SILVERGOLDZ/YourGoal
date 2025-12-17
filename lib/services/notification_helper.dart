@@ -9,31 +9,35 @@ class NotificationHelper {
   // 1. Inisialisasi di awal aplikasi (main.dart)
   static Future<void> init() async {
     tz.initializeTimeZones();
-    String timeZoneName;
+
+    String timeZoneName = 'Asia/Jakarta'; // default fallback
+
     try {
-      // Coba ambil timezone dari sistem
-      timeZoneName = await FlutterTimezone.getLocalTimezone();
+      // Ambil timezone dari sistem (API BARU)
+      final tzInfo = await FlutterTimezone.getLocalTimezone();
+      timeZoneName = tzInfo.identifier;
+      // atau: tzInfo.identifier
     } catch (e) {
-      // Jika gagal (seperti error di Windows tadi), gunakan default Jakarta
-      print("Gagal mengambil timezone, menggunakan fallback Asia/Jakarta");
-      timeZoneName = 'Asia/Jakarta';
+      print(
+        "Gagal mengambil timezone sistem, fallback ke Asia/Jakarta: $e",
+      );
     }
-    // Validasi apakah timezone dikenali oleh database timezone
+
+    // Set timezone ke package timezone
     try {
       tz.setLocalLocation(tz.getLocation(timeZoneName));
     } catch (e) {
-      // Jika string timezone sistem aneh, fallback lagi
+      // Fallback terakhir jika timezone aneh
       tz.setLocalLocation(tz.getLocation('Asia/Jakarta'));
     }
-    // -----------------------------
+
     const AndroidInitializationSettings androidSettings =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Tambahkan setting Linux/Windows agar tidak null (Opsional tapi bagus)
     const InitializationSettings settings = InitializationSettings(
       android: androidSettings,
-      // iOS, macOS, linux bisa ditambah di sini jika perlu
     );
+
     await _notification.initialize(settings);
   }
 
@@ -67,12 +71,12 @@ class NotificationHelper {
     );
   }
 
-  // 3. Batalkan notifikasi (jika goal selesai/dihapus)
+  // 3. Batalkan notifikasi
   static Future<void> cancelNotification(int id) async {
     await _notification.cancel(id);
   }
 
-  // 4. Batalkan semua (opsional, untuk refresh)
+  // 4. Batalkan semua notifikasi
   static Future<void> cancelAll() async {
     await _notification.cancelAll();
   }
