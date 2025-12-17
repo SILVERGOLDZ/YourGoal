@@ -87,5 +87,15 @@ class PostService {
       await docRef.update({'savedBy': FieldValue.arrayUnion([uid])});
     }
   }
+  Future<void> deletePost(String postId) async {
+    try {
+      await _db.collection('posts').doc(postId).delete();
+    } catch (e) {
+      print("Error deleting post: $e");
+      rethrow;
+    }
+  }
+
 }
+
 

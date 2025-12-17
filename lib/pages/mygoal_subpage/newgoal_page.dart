@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../models/goal_model.dart';
 import '../../services/goaldata_service.dart';
 
 class NewRoadmapScreen extends StatefulWidget {

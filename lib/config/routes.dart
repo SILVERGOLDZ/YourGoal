@@ -15,6 +15,7 @@ import 'package:tes/pages/email_verification_page.dart';
 import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
 import 'package:tes/pages/Login&Register/forgot_password_page.dart';
 
+import '../models/goal_model.dart';
 import '../pages/mygoal_subpage/detailscreen_page.dart';
 import '../pages/user_journey.dart';
 import '../services/goaldata_service.dart';

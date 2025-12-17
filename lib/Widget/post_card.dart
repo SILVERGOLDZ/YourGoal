@@ -8,6 +8,7 @@ class PostCard extends StatelessWidget {
   final bool isBookmarked; // <-- TAMBAHAN BARU
   final VoidCallback onLikePressed;      // Fungsi ketika tombol like ditekan
   final VoidCallback onBookmarkPressed;  // Fungsi ketika tombol bookmark ditekan
+  final VoidCallback? onDeletePressed;
   final String? image;
   final double screenwidth;
 
@@ -21,6 +22,7 @@ class PostCard extends StatelessWidget {
     required this.onLikePressed,
     required this.onBookmarkPressed,
     this.image,
+    this.onDeletePressed, // 2. MASUKKAN KE CONSTRUCTOR
     required this.screenwidth,
   });
 
@@ -50,6 +52,14 @@ class PostCard extends StatelessWidget {
                   user,
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
+                const Spacer(), // Mendorong elemen berikutnya ke paling kanan
+
+                if (onDeletePressed != null)
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.grey, size: 20),
+                    onPressed: onDeletePressed,
+                    tooltip: 'Hapus Postingan',
+                  ),
               ],
             ),
 

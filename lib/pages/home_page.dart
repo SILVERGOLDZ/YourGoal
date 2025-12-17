@@ -4,7 +4,9 @@ import 'package:tes/Widget/base_page.dart';
 import 'package:tes/Widget/gradient_button.dart';
 import 'package:tes/Widget/goal_card.dart';
 import 'package:tes/Widget/stat_card.dart';
-import '../services/goaldata_service.dart';
+import '../models/goal_model.dart';
+import '../services/goaldata_service.dart'
+;
 
 class MyGoalPage extends StatefulWidget {
   const MyGoalPage({super.key});
@@ -130,6 +132,7 @@ class _MyGoalPageState extends State<MyGoalPage> {
       ],
     );
   }
+
 
   // View Dashboard (Menerima Data dari Stream)
   Widget _buildDashboardView(List<RoadmapModel> roadmaps) {

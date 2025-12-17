@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tes/config/routes.dart';
+import 'package:tes/services/notification_helper.dart';
 import 'package:tes/theme/app_theme.dart';
 import 'package:tes/services/auth/auth_service.dart'; // Import AuthService
 
@@ -18,6 +19,7 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await NotificationHelper.init();
   runApp(MyApp());
 }
 

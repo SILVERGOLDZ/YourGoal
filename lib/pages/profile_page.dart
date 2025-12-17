@@ -12,9 +12,11 @@ import 'package:tes/Widget/base_page.dart';
 import '../Widget/gradient_button.dart';
 import '../Widget/post_card.dart';
 import '../Widget/stat_card.dart';
+import '../models/goal_model.dart';
 import '../services/goaldata_service.dart';
 import '../models/post_model.dart'; // Import Model
 import '../services/post_service.dart'; // Import Service
+import '../pages/explore_page.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -108,6 +110,44 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
     if (mounted) setState(() => _isLoading = false);
+  }
+  // Fungsi untuk menampilkan dialog konfirmasi hapus
+  void _confirmDelete(String postId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Hapus Postingan?"),
+          content: const Text("Postingan ini akan dihapus secara permanen dari profil Anda."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Tutup dialog
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Tutup dialog dulu
+                try {
+                  await _postService.deletePost(postId);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Postingan berhasil dihapus")),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Gagal menghapus: $e")),
+                    );
+                  }
+                }
+              },
+              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -355,6 +395,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
               bool isLiked = post.likedBy.contains(user.uid);
               bool isBookmarked = post.savedBy.contains(user.uid);
+              bool isOwner = true;
+
               return PostCard(
                 user: post.username,
                 text: post.text,
@@ -376,6 +418,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   );
                 },
+                onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
               );
             },
             childCount: docs.length,

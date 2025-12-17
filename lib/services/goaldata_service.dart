@@ -1,130 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../models/goal_model.dart';
 import '../models/journey_model.dart';
+import 'notification_helper.dart';
 
-// ==========================================
-// 1. MODEL DATA (Updated for Firebase)
-// ==========================================
-
-class StepModel {
-  final String title;
-  final String description;
-  final String message;
-  final DateTime deadline;
-  bool isCompleted;
-  String status;
-  final List<String> subtasks;
-
-  // BARU
-  String? comment;              // hanya ada jika complete
-  DateTime? completedAt;        // timestamp selesai
-
-  StepModel({
-    required this.title,
-    required this.deadline,
-    this.description = '',
-    this.message = '',
-    this.subtasks = const [],
-    this.isCompleted = false,
-    this.status = 'In Progress',
-    this.comment,
-    this.completedAt,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'description': description,
-      'message': message,
-      'deadline': Timestamp.fromDate(deadline),
-      'subtasks': subtasks,
-      'isCompleted': isCompleted,
-      'status': status,
-      "comment": comment,
-      "completedAt": completedAt,
-    };
-  }
-
-
-  // Convert Map ke Object (Untuk baca dari Firestore)
-  factory StepModel.fromMap(Map<String, dynamic> map) {
-    return StepModel(
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      message: map['message'] ?? '',
-      deadline: map['deadline'] != null
-          ? (map['deadline'] as Timestamp).toDate()
-          : DateTime.now(),
-      subtasks: List<String>.from(map['subtasks'] ?? []),
-      isCompleted: map['isCompleted'] ?? false,
-      status: map['status'] ?? 'In Progress',
-      comment: map['comment'], // NEW
-      completedAt: map['completedAt'] != null
-          ? (map['completedAt'] as Timestamp).toDate()
-          : null, // NEW
-    );
-  }
-
-}
-
-class RoadmapModel {
-  String? id; // ID Dokumen Firestore (Penting untuk Update/Delete)
-  String title;
-  String time;
-  String description;
-  List<StepModel> steps;
-
-  RoadmapModel({
-    this.id,
-    required this.title,
-    required this.time,
-    required this.description,
-    required this.steps,
-  });
-
-  // Hitung progress
-  double get progress {
-    if (steps.isEmpty) return 0.0;
-    int completedCount = steps.where((s) => s.isCompleted).length;
-    return completedCount / steps.length;
-  }
-
-  String get dynamic_status {
-    return progress == 1.0 ? "Completed" : "In Progress";
-  }
-
-  // Ke Map
-  Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'time': time,
-      'description': description,
-      'steps': steps.map((x) => x.toMap()).toList(),
-      'createdAt': FieldValue.serverTimestamp(),
-      'status': dynamic_status, // computed
-    };
-  }
-
-  // Dari Firestore Snapshot
-  factory RoadmapModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return RoadmapModel(
-      id: doc.id,
-      title: data['title'] ?? '',
-      time: data['time'] ?? '',
-      description: data['description'] ?? '',
-      steps: List<StepModel>.from(
-        (data['steps'] ?? []).map((x) => StepModel.fromMap(x)),
-      ),
-    );
-  }
-
-}
-
-// ==========================================
-// 2. FIREBASE SERVICE (User Specific)
-// ==========================================
 
 class GoalDataService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -143,6 +23,8 @@ class GoalDataService {
   Future<void> addRoadmap(RoadmapModel roadmap) async {
     if (_goalsCollection == null) return;
     await _goalsCollection!.add(roadmap.toMap());
+    DocumentReference docRef = await _goalsCollection!.add(roadmap.toMap());
+    _scheduleNotificationsForRoadmap(roadmap, docRef.id);
   }
 
   // READ: Stream Data (Realtime Updates)
@@ -201,5 +83,37 @@ class GoalDataService {
       return journeys;
     });
   }
+  void _scheduleNotificationsForRoadmap(RoadmapModel roadmap, String roadmapId) {
+    for (int i = 0; i < roadmap.steps.length; i++) {
+      StepModel step = roadmap.steps[i];
 
+      // Buat ID unik untuk notifikasi berdasarkan hashcode string kombinasi
+      // (Agar setiap step punya ID notifikasi yang unik dan konsisten)
+      int notificationId = (roadmapId + i.toString()).hashCode;
+
+      if (!step.isCompleted) {
+        // Jadwalkan Notifikasi HANYA jika belum selesai
+        NotificationHelper.scheduleNotification(
+          id: notificationId,
+          title: "Deadline Reminder: ${step.title}",
+          body: "Goal '${roadmap.title}' is due soon!",
+          scheduledDate: step.deadline,
+        );
+
+        // Opsi tambahan: Jadwalkan notifikasi "Peringatan H-1"
+        NotificationHelper.scheduleNotification(
+          id: notificationId + 99999, // ID beda
+          title: "Tomorrow: ${step.title}",
+          body: "Don't forget to complete your task!",
+          scheduledDate: step.deadline.subtract(Duration(days: 1)),
+        );
+
+      } else {
+        // Jika step sudah selesai, batalkan notifikasi yang mungkin sudah terpasang
+        NotificationHelper.cancelNotification(notificationId);
+        NotificationHelper.cancelNotification(notificationId + 99999);
+      }
+    }
+  }
 }
+
