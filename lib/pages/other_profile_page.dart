@@ -143,7 +143,7 @@ class OtherProfilePage extends StatelessWidget {
                         }
 
                         return PostCard(
-                          user: post.username,
+                          user: post. username,
                           text: post.text,
                           likeCount: post.likeCount,
                           isLiked: isLiked,

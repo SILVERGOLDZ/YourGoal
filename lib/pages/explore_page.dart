@@ -53,7 +53,28 @@ class _ExplorePageState extends State<ExplorePage> {
     _searchFocusNode.dispose();
     super.dispose();
   }
+  void _navigateToUserProfile(String userId) async {
+    try {
+      // Ambil data user lengkap dari Firestore menggunakan userId dari post
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
 
+      if (userDoc.exists && mounted) {
+        // Gunakan factory constructor sesuai template model Anda
+        final user = UserModel.fromFirestore(userDoc);
+
+        // Navigasi ke halaman profil orang lain menggunakan GoRouter
+        context.pushNamed(
+          'otherProfile',
+          extra: user,
+        );
+      }
+    } catch (e) {
+      debugPrint("Error fetching user for profile: $e");
+    }
+  }
   void _onSearchChanged() {
     final newQuery = _searchController.text;
 
@@ -96,6 +117,9 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   void _showCreatePostDialog() {
+    setState(() {
+      _isPosting = false;
+    });
     showDialog(
       context: context,
       barrierDismissible: !_isPosting,
@@ -446,6 +470,7 @@ class _ExplorePageState extends State<ExplorePage> {
                   );
                 },
                 onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
+                onUserTap: () => _navigateToUserProfile(post.userId),
               );
             },
             childCount: docs.length,
