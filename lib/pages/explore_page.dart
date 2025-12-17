@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tes/Widget/post_card.dart';
 import 'package:tes/models/post_model.dart';
 import 'package:tes/models/user_model.dart';
@@ -366,7 +367,10 @@ class _ExplorePageState extends State<ExplorePage> {
                   ),
                   subtitle: Text(user.email),
                   onTap: () {
-                    // TODO: Navigate to profile
+                    context.pushNamed(
+                      'otherProfile', // Must match the name in routes.dart
+                      extra: user,    // Pass the user object
+                    );
                   },
                 ),
               );

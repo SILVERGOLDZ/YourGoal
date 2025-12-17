@@ -16,7 +16,9 @@ import 'package:tes/pages/mygoal_subpage/newgoal_page.dart';
 import 'package:tes/pages/Login&Register/forgot_password_page.dart';
 
 import '../models/goal_model.dart';
+import '../models/user_model.dart';
 import '../pages/mygoal_subpage/detailscreen_page.dart';
+import '../pages/other_profile_page.dart';
 import '../pages/user_journey.dart';
 import '../services/goaldata_service.dart';
 
@@ -35,6 +37,7 @@ class AppRoutes {
   static const String editProfile = '/edit-profile';
   static const String goalDetail = '/goal-detail';
   static const String journey = '/journey';
+  static const String otherProfile = '/other-profile';
 }
 
 GoRouter createRouter(Stream<User?> authStream) {
@@ -137,6 +140,15 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.forgotPassword,
         name: 'forgotPassword',
         builder: (context, state) => const ForgotPasswordPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.otherProfile,
+        name: 'otherProfile',
+        builder: (context, state) {
+          // Retrieve the user object passed from ExplorePage
+          final user = state.extra as UserModel;
+          return OtherProfilePage(user: user);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
