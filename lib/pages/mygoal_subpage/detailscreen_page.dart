@@ -26,8 +26,12 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
 
   // --- FUNGSI UPDATE FIREBASE ---
   void _markStepAsComplete(StepModel step, String? comment) async {
-    // Validasi: deadline sudah lewat
-    if (step.deadline.isBefore(DateTime.now()) && !_isSameDay(step.deadline, DateTime.now())) {
+    // Validasi: deadline sudah lewat (gunakan date comparison yang konsisten)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final deadlineDate = DateTime(step.deadline.year, step.deadline.month, step.deadline.day);
+
+    if (deadlineDate.isBefore(today)) {
       _showIntegrityWarning(
         "Deadline Already Passed",
         "The deadline for this step was ${step.deadline.day}/${step.deadline.month}/${step.deadline.year}. "
@@ -184,6 +188,10 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(step.title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
                   Text(step.status, style: const TextStyle(color: Color(0xFF1E89EF), fontWeight: FontWeight.w500, fontSize: 14)),
+                  Text(
+                    "Deadline: ${step.deadline.day}/${step.deadline.month}/${step.deadline.year}",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
                   if (step.isCompleted) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -208,6 +216,13 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
   void _showGoalDetailDialog(BuildContext context, StepModel step) {
     final commentController = TextEditingController();
     final textTheme = Theme.of(context).textTheme;
+
+    // Cek apakah deadline sudah lewat (bukan hari ini)
+    // Cek apakah deadline sudah lewat (termasuk hari ini masih bisa)
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final deadlineDate = DateTime(step.deadline.year, step.deadline.month, step.deadline.day);
+    final isDeadlinePassed = deadlineDate.isBefore(today);
 
     showDialog(
       context: context,
@@ -247,13 +262,15 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.05),
+                    color: isDeadlinePassed ? Colors.orange.withOpacity(0.1) : Colors.red.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text(
-                    "Jika kamu menyelesaikan step ini, kamu tidak bisa membatalkannya.\n"
-                        "Apakah kamu yakin dan berintegritas dalam menyelesaikan step ini?",
-                    style: TextStyle(color: Colors.red),
+                  child: Text(
+                    isDeadlinePassed
+                        ? "⚠️ Deadline is overdue (${step.deadline.day}/${step.deadline.month}/${step.deadline.year}).\n"
+                        : "After finishing this step, you can't undo it.\n"
+                        "Are you sure you have completed this step?",
+                    style: TextStyle(color: isDeadlinePassed ? Colors.orange[800] : Colors.red),
                   ),
                 ),
 
@@ -270,7 +287,14 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
                       );
                       Navigator.pop(context);
                     },
-                    child: const Text("I have completed this goal"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isDeadlinePassed ? Colors.orange : null,
+                    ),
+                    child: Text(
+                        isDeadlinePassed
+                            ? "Complete (Late)"
+                            : "I have completed this goal"
+                    ),
                   ),
                 )
               ],
