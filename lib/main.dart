@@ -1,22 +1,44 @@
 import 'package:flutter/material.dart';
-import 'package:tes/ReusableWidget/navigation_widget.dart';
-import 'theme/app_theme.dart';
-import 'ReusableWidget/navigation_widget.dart';
+import 'package:flutter/services.dart';
+import 'package:tes/config/routes.dart';
+import 'package:tes/services/notification_helper.dart';
+import 'package:tes/theme/app_theme.dart';
+import 'package:tes/services/auth/auth_service.dart'; // Import AuthService
+import 'package:tes/utils/snackbar_helper.dart';
 
-void main() {
-  runApp(const MyApp());
+//firebase
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize Firebase with the default options
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  await NotificationHelper.init();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  MyApp({super.key});
+
+  // Create an instance of AuthService to get the auth stream
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
+    return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
+      title: 'YourGoal',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme, // ✅ theme is cleanly separated
-      home: const navigation_widget(),
+      theme: AppTheme.lightTheme,
+      // Pass the auth stream to the router
+      routerConfig: createRouter(_authService.authStateChanges),
     );
   }
 }

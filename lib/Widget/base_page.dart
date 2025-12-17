@@ -5,7 +5,7 @@ DAN SESUAI DENGAN BACKGROUND APLIKASI HALAMAN YANG DIPILIH)
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tes/ReusableWidget/mygoal_background.dart';
+import 'package:tes/Widget/mygoal_background.dart';
 
 class BasePage extends StatelessWidget {
   final Widget child;
