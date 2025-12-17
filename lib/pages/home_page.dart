@@ -7,6 +7,7 @@ import 'package:tes/Widget/stat_card.dart';
 import '../models/goal_model.dart';
 import '../services/goaldata_service.dart'
 ;
+import '../services/post_service.dart';
 
 class MyGoalPage extends StatefulWidget {
   const MyGoalPage({super.key});
@@ -17,6 +18,44 @@ class MyGoalPage extends StatefulWidget {
 
 class _MyGoalPageState extends State<MyGoalPage> {
   final GoalDataService _dataService = GoalDataService();
+
+// Di dalam class _MyGoalPageState, tambahkan fungsi dialog share
+  void _showShareDialog(RoadmapModel roadmap) {
+    final TextEditingController shareController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Share to Explore"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Share your progress on '${roadmap.title}'?"),
+            const SizedBox(height: 10),
+            TextField(
+              controller: shareController,
+              decoration: const InputDecoration(hintText: "Add a caption..."),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              await PostService().shareRoadmapAsPost(shareController.text, roadmap);
+              if (mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Shared to Explore!")),
+                );
+              }
+            },
+            child: const Text("Share Now"),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showDeleteDialog(BuildContext context, RoadmapModel roadmap) {
     showDialog(
@@ -165,7 +204,30 @@ class _MyGoalPageState extends State<MyGoalPage> {
                     context.pushNamed('goalDetail', extra: roadmap);
                   },
                   onLongPress: () {
-                    _showDeleteDialog(context, roadmap);
+                    // Tampilkan pilihan Share atau Delete
+                    showModalBottomSheet(
+                        context: context,
+                        builder: (context) => Wrap(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.share, color: Colors.blue),
+                              title: const Text('Share to Explore'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showShareDialog(roadmap);
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.delete, color: Colors.red),
+                              title: const Text('Delete Goal'),
+                              onTap: () {
+                                Navigator.pop(context);
+                                _showDeleteDialog(context, roadmap);
+                              },
+                            ),
+                          ],
+                        ),
+                    );
                   },
                   child: GoalCard(
                     title: roadmap.title,

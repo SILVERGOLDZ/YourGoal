@@ -108,5 +108,16 @@ class RoadmapModel {
         (data['steps'] ?? []).map((x) => StepModel.fromMap(x)),
       ),
     );
+  }// Di dalam class RoadmapModel file goal_model.dart
+  factory RoadmapModel.fromFirestoreData(Map<String, dynamic> data) {
+    return RoadmapModel(
+      id: null, // Berikan null karena ini adalah data sharing, bukan dari koleksi user asli
+      title: data['title'] ?? '',
+      time: data['time'] ?? '',
+      description: data['description'] ?? '',
+      steps: List<StepModel>.from(
+        (data['steps'] ?? []).map((x) => StepModel.fromMap(x)),
+      ),
+    );
   }
 }
