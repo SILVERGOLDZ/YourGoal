@@ -20,7 +20,6 @@ import '../models/user_model.dart';
 import '../pages/mygoal_subpage/detailscreen_page.dart';
 import '../pages/other_profile_page.dart';
 import '../pages/user_journey.dart';
-import '../services/goaldata_service.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -113,7 +112,6 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.newgoal,
         name: 'newgoal',
         builder: (context, state) {
-          // Ambil extra parameter jika ada (untuk edit mode)
           final existingRoadmap = state.extra as RoadmapModel?;
           return NewRoadmapScreen(existingRoadmap: existingRoadmap);
         },

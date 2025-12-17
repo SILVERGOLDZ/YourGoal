@@ -4,6 +4,7 @@ import 'package:tes/config/routes.dart';
 import 'package:tes/services/notification_helper.dart';
 import 'package:tes/theme/app_theme.dart';
 import 'package:tes/services/auth/auth_service.dart'; // Import AuthService
+import 'package:tes/utils/snackbar_helper.dart';
 
 //firebase
 import 'package:firebase_core/firebase_core.dart';
@@ -32,6 +33,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       title: 'YourGoal',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,

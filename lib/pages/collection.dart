@@ -21,13 +21,13 @@ class _CollectionState extends State<CollectionPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Hapus Postingan?"),
+          title: const Text("Delete Post?"),
           content: const Text(
-              "Postingan ini akan dihapus secara permanen dari profil Anda."),
+              "This post will be permanently deleted from your profile."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context), // Tutup dialog
-              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
@@ -35,19 +35,21 @@ class _CollectionState extends State<CollectionPage> {
                 try {
                   await _postService.deletePost(postId);
                   if (mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Postingan berhasil dihapus")),
+                      const SnackBar(content: Text("Post deleted successfully")),
                     );
                   }
                 } catch (e) {
                   if (mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Gagal menghapus: $e")),
+                      SnackBar(content: Text("Failed to delete: $e")),
                     );
                   }
                 }
               },
-              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
           ],
         );
