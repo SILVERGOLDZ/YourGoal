@@ -5,7 +5,13 @@ import '../../services/goaldata_service.dart';
 
 class RoadmapDetailScreen extends StatefulWidget {
   final RoadmapModel? roadmap;
-  const RoadmapDetailScreen({super.key, this.roadmap});
+  final bool isReadOnly; // Tambahkan parameter ini
+
+  const RoadmapDetailScreen({
+    super.key,
+    this.roadmap,
+    this.isReadOnly = false, // Default false agar fitur utama tetap normal
+  });
 
   @override
   State<RoadmapDetailScreen> createState() => _RoadmapDetailScreenState();
@@ -105,11 +111,12 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.black), onPressed: () => context.pop()),
         title: Text('Roadmap Detail', style: textTheme.titleLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit, color: Colors.black),
-            onPressed: _editRoadmap,
-            tooltip: 'Edit Roadmap',
-          ),
+          if (!widget.isReadOnly)
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.black),
+              onPressed: _editRoadmap,
+              tooltip: 'Edit Roadmap',
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -140,6 +147,14 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
             Text("Goals", style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 20)),
             const SizedBox(height: 16),
 
+            widget.isReadOnly
+                ? ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _steps.length,
+              itemBuilder: (context, index) => _buildGoalCard(context, _steps[index], index, key: ValueKey(index)),
+            )
+                :
             ReorderableListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -174,15 +189,17 @@ class _RoadmapDetailScreenState extends State<RoadmapDetailScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: step.isCompleted
+          onTap: (widget.isReadOnly || step.isCompleted)
               ? null
               : () => _showGoalDetailDialog(context, step),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             child: Row(
               children: [
-                Icon(Icons.drag_handle, color: Colors.grey[400]),
-                const SizedBox(width: 8),
+                if (!widget.isReadOnly) ...[
+                  Icon(Icons.drag_handle, color: Colors.grey[400]),
+                  const SizedBox(width: 8),
+                ],                const SizedBox(width: 8),
                 IgnorePointer(child: Transform.scale(scale: 1.3, child: Checkbox(value: isCompleted, onChanged: (val){}, activeColor: const Color(0xFF1E89EF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5))))),
                 const SizedBox(width: 8),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

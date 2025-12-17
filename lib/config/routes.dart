@@ -120,8 +120,14 @@ GoRouter createRouter(Stream<User?> authStream) {
         path: AppRoutes.goalDetail,
         name: 'goalDetail',
         builder: (context, state) {
-          RoadmapModel? roadmap = state.extra as RoadmapModel?;
-          return RoadmapDetailScreen(roadmap: roadmap);
+          if (state.extra is Map<String, dynamic>) {
+            final map = state.extra as Map<String, dynamic>;
+            return RoadmapDetailScreen(
+              roadmap: map['roadmap'] as RoadmapModel,
+              isReadOnly: map['isReadOnly'] as bool,
+            );
+          }
+          return RoadmapDetailScreen(roadmap: state.extra as RoadmapModel);
         },
       ),
       GoRoute(
