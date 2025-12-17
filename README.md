@@ -96,7 +96,7 @@ Jika Anda ingin menjalankan *source code* ini di mesin lokal:
 
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/SILVERGOLDZ/YourGoal.git](https://github.com/SILVERGOLDZ/YourGoal.git)
+    git clone https://github.com/SILVERGOLDZ/YourGoal.git
     cd YourGoal
     ```
 
