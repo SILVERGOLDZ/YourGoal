@@ -104,7 +104,43 @@ class _ExplorePageState extends State<ExplorePage> {
       },
     );
   }
-
+  void _confirmDelete(String postId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Hapus Postingan?"),
+          content: const Text("Postingan ini akan dihapus secara permanen."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Tutup dialog
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Tutup dialog dulu
+                try {
+                  await _postService.deletePost(postId);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Postingan berhasil dihapus")),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Gagal menghapus: $e")),
+                    );
+                  }
+                }
+              },
+              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     // Ambil User ID saat ini untuk pengecekan like & bookmark
@@ -177,11 +213,12 @@ class _ExplorePageState extends State<ExplorePage> {
                       // --- LOGIKA UTAMA PERUBAHAN DI SINI ---
                       bool isLiked = false;
                       bool isBookmarked = false; // Default false
-
+                      bool isOwner = false;
                       // Cek jika user login, update status based on ID
                       if (currentUid != null) {
                         isLiked = post.likedBy.contains(currentUid);
                         isBookmarked = post.savedBy.contains(currentUid); // <-- Pakai currentUid, bukan user.uid
+                        isOwner = post.userId == currentUid; // <--- Cek Ownership
                       }
 
                       return PostCard(
@@ -213,6 +250,7 @@ class _ExplorePageState extends State<ExplorePage> {
                             ),
                           );
                         },
+                        onDeletePressed: isOwner ? () => _confirmDelete(post.id) : null,
                       );
                     },
                     childCount: docs.length,

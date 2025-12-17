@@ -15,11 +15,52 @@ class CollectionPage extends StatefulWidget {
 class _CollectionState extends State<CollectionPage> {
   final PostService _postService = PostService();
 
+  // Fungsi untuk menampilkan dialog konfirmasi hapus
+  void _confirmDelete(String postId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Hapus Postingan?"),
+          content: const Text(
+              "Postingan ini akan dihapus secara permanen dari profil Anda."),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context), // Tutup dialog
+              child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context); // Tutup dialog dulu
+                try {
+                  await _postService.deletePost(postId);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Postingan berhasil dihapus")),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Gagal menghapus: $e")),
+                    );
+                  }
+                }
+              },
+              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenSize = (screenWidth < screenHeight ? screenWidth : screenHeight);
+    final screenSize =
+    (screenWidth < screenHeight ? screenWidth : screenHeight);
 
     return Scaffold(
       body: SafeArea(
@@ -51,14 +92,14 @@ class _CollectionState extends State<CollectionPage> {
                   delegate: SliverChildBuilderDelegate(
                         (context, index) {
                       // Ambil ID Post dari dokumen bookmark
-                      // (Asumsi di PostService: toggleBookmark menyimpan doc dengan ID = postId)
                       final postId = bookmarkDocs[index].id;
 
-                      // Panggil Widget Helper untuk fetch detail post
+                      // Panggil Widget Helper
                       return _BookmarkedPostItem(
                         postId: postId,
                         screenWidth: screenWidth,
                         postService: _postService,
+                        onDelete: _confirmDelete, // Kirim fungsi ke sini
                       );
                     },
                     childCount: bookmarkDocs.length,
@@ -78,11 +119,14 @@ class _BookmarkedPostItem extends StatelessWidget {
   final String postId;
   final double screenWidth;
   final PostService postService;
+  final Function(String) onDelete; // Parameter penampung fungsi
 
   const _BookmarkedPostItem({
+    super.key,
     required this.postId,
     required this.screenWidth,
     required this.postService,
+    required this.onDelete,
   });
 
   @override
@@ -94,7 +138,6 @@ class _BookmarkedPostItem extends StatelessWidget {
       builder: (context, snapshot) {
         // Jika data masih loading atau post sudah dihapus ownernya
         if (!snapshot.hasData || !snapshot.data!.exists) {
-          // Opsional: Bisa return SizedBox() agar tidak terlihat
           return const SizedBox();
         }
 
@@ -105,10 +148,13 @@ class _BookmarkedPostItem extends StatelessWidget {
         );
 
         bool isLiked = false;
-        bool isBookmarked = false; // <-- Variabel baru
+        bool isBookmarked = false;
+        bool isOwner = false;
+
         if (currentUid != null) {
           isLiked = post.likedBy.contains(currentUid);
-          isBookmarked = post.savedBy.contains(currentUid); // <-- Cek array savedBy
+          isBookmarked = post.savedBy.contains(currentUid);
+          isOwner = post.userId == currentUid;
         }
 
         return PostCard(
@@ -116,7 +162,7 @@ class _BookmarkedPostItem extends StatelessWidget {
           text: post.text,
           likeCount: post.likeCount,
           isLiked: isLiked,
-          isBookmarked: isBookmarked, // <-- Pass ke widget
+          isBookmarked: isBookmarked,
           image: null,
           screenwidth: screenWidth,
 
@@ -124,17 +170,21 @@ class _BookmarkedPostItem extends StatelessWidget {
           onBookmarkPressed: () {
             postService.toggleBookmark(post.id, post.savedBy);
 
-            // Opsional: Tampilkan snackbar
             ScaffoldMessenger.of(context).clearSnackBars();
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(isBookmarked ? "Removed from Collection" : "Saved to Collection"),
+                content: Text(isBookmarked
+                    ? "Removed from Collection"
+                    : "Saved to Collection"),
                 duration: const Duration(milliseconds: 500),
               ),
             );
           },
+          // PERBAIKAN UTAMA DI SINI:
+          // Gunakan 'onDelete' (parameter), BUKAN '_confirmDelete' (fungsi parent)
+          onDeletePressed: isOwner ? () => onDelete(post.id) : null,
         );
-        },
+      },
     );
   }
 }
