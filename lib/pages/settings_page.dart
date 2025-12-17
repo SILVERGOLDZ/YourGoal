@@ -254,14 +254,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: "Account Safety",
                         showDivider: true,
                         onTap: () =>
-                            showSnackBar(context, 'This feature is not implemented yet'),
+                            showSnackBar('This feature is not implemented yet'),
                       ),
                       _buildListTile(
                         icon: Icons.bookmark_outline,
                         title: "Saved Post",
                         showDivider: false,
                         onTap: () =>
-                            showSnackBar(context, 'This feature is not implemented yet'),
+                            showSnackBar('This feature is not implemented yet'),
                       ),
                     ],
                   ),
@@ -281,14 +281,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: "Language",
                         showDivider: true,
                         onTap: () =>
-                            showSnackBar(context, 'This feature is not implemented yet'),
+                            showSnackBar('This feature is not implemented yet'),
                       ),
                       _buildListTile(
                         icon: Icons.accessibility_new,
                         title: "Accessibility",
                         showDivider: false,
                         onTap: () =>
-                            showSnackBar(context, 'This feature is not implemented yet'),
+                            showSnackBar('This feature is not implemented yet'),
                       ),
                     ],
                   ),

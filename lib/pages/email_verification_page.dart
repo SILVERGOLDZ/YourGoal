@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tes/utils/snackbar_helper.dart';
-// Pastikan import ini ada untuk warna, atau ganti AppColors.active dengan Colors.blue dsb.
+// Make sure this import exists for colors, or replace AppColors.active with Colors.blue etc.
 import 'package:tes/theme/colors.dart';
-// Jika Anda tidak memiliki AuthService, Anda bisa menggunakan FirebaseAuth langsung untuk logout
+// If you don't have AuthService, you can use FirebaseAuth directly for logout
 import 'package:tes/services/auth/auth_service.dart';
 
 class EmailVerificationPage extends StatefulWidget {
@@ -16,27 +16,27 @@ class EmailVerificationPage extends StatefulWidget {
 }
 
 class _EmailVerificationPageState extends State<EmailVerificationPage> {
-  // --- LOGIC VARIABLES (Dari File 1) ---
+  // --- LOGIC VARIABLES (From File 1) ---
   bool isEmailVerified = false;
   bool canResendEmail = false;
   Timer? timer;
-  // Variabel tambahan untuk UI loading saat logout/aksi lain jika diperlukan
+  // Additional variable for UI loading during logout/other actions if needed
   final bool _isPerformingAction = false;
 
   @override
   void initState() {
     super.initState();
 
-    // --- LOGIC INIT (Dari File 1) ---
+    // --- LOGIC INIT (From File 1) ---
 
-    // Cek apakah email user sudah terverifikasi saat halaman pertama kali dibuka
+    // Check if the user's email is verified when the page is first opened
     isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
 
-    // Jika email belum terverifikasi, kirim email verifikasi
+    // If the email is not verified, send a verification email
     if (!isEmailVerified) {
       sendVerificationEmail();
 
-      // Mulai timer untuk mengecek status verifikasi setiap 3 detik
+      // Start a timer to check the verification status every 3 seconds
       timer = Timer.periodic(
         const Duration(seconds: 3),
             (_) => checkEmailVerified(),
@@ -46,18 +46,18 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
 
   @override
   void dispose() {
-    // --- LOGIC DISPOSE (Dari File 1) ---
+    // --- LOGIC DISPOSE (From File 1) ---
     timer?.cancel();
     super.dispose();
   }
 
-  /// Mengecek status verifikasi email user secara berkala.
-  /// (Logic persis dari File 1)
+  /// Checks the user's email verification status periodically.
+  /// (Exact logic from File 1)
   Future<void> checkEmailVerified() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Memuat ulang data user dari Firebase untuk mendapatkan status terbaru
+    // Reload user data from Firebase to get the latest status
     await user.reload();
     user = FirebaseAuth.instance.currentUser;
 
@@ -65,7 +65,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
 
     final isVerifiedNow = user?.emailVerified ?? false;
 
-    // Update state agar UI bisa berubah jika diperlukan (misal menghilangkan tombol)
+    // Update state so the UI can change if needed (e.g. removing a button)
     if (isVerifiedNow != isEmailVerified) {
       setState(() {
         isEmailVerified = isVerifiedNow;
@@ -75,24 +75,24 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
     if (isVerifiedNow) {
       timer?.cancel();
 
-      // Navigasi ke halaman 'home' dan kirim parameter 'extra'
-      // Sesuai logic file 1
+      // Navigate to the 'home' page and send the 'extra' parameter
+      // According to file 1 logic
       context.goNamed('home', extra: {'showVerificationSuccess': true});
     }
   }
 
-  /// Mengirim email verifikasi ke user.
-  /// (Logic persis dari File 1: Delay 5 detik)
+  /// Sends a verification email to the user.
+  /// (Exact logic from File 1: 5 second delay)
   Future<void> sendVerificationEmail() async {
     try {
       final user = FirebaseAuth.instance.currentUser!;
       await user.sendEmailVerification();
 
       if (mounted) {
-        showSnackBar(context, "Email verifikasi terkirim");
+        showSnackBar("Verification email sent");
       }
 
-      // Logic: disable tombol selama 5 detik
+      // Logic: disable the button for 5 seconds
       setState(() => canResendEmail = false);
       await Future.delayed(const Duration(seconds: 5));
 
@@ -101,23 +101,23 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       }
     } catch (e) {
       if (mounted) {
-        showSnackBar(context, "Error: ${e.toString()}", isError: true);
+        showSnackBar("Error: ${e.toString()}", isError: true);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Fallback jika sudah verified (Dari File 1 + Desain Loading)
+    // Fallback if already verified (From File 1 + Loading Design)
     if (isEmailVerified) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // --- UI DESIGN (Dari File 2) ---
+    // --- UI DESIGN (From File 2) ---
     return PopScope(
-      canPop: false, // Mencegah back button
+      canPop: false, // Prevents back button
       child: Scaffold(
         body: SafeArea(
           child: Padding(
@@ -125,48 +125,48 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Icon Desain Baru
+                // New Design Icon
                 const Icon(
                   Icons.mark_email_unread_outlined,
                   size: 100,
-                  color: AppColors.active, // Pastikan AppColors diimport atau ganti Colors.blue
+                  color: AppColors.active, // Make sure AppColors is imported or change to Colors.blue
                 ),
                 const SizedBox(height: 30),
 
-                // Title Desain Baru
+                // New Design Title
                 const Text(
-                  'Verifikasi Email Anda',
+                  'Verify Your Email',
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
 
-                // Deskripsi dengan Email User
+                // Description with User Email
                 Text(
-                  'Kami telah mengirimkan link verifikasi ke email:\n${FirebaseAuth.instance.currentUser?.email}',
+                  'We have sent a verification link to the email:\n${FirebaseAuth.instance.currentUser?.email}',
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 30),
 
-                // Tombol "Saya Sudah Verifikasi" (Manual Check)
-                // Menggunakan fungsi checkEmailVerified dari Logic 1
+                // "I Have Verified" Button (Manual Check)
+                // Using the checkEmailVerified function from Logic 1
                 ElevatedButton.icon(
                   onPressed: checkEmailVerified,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Saya Sudah Verifikasi'),
+                  label: const Text('I Have Verified'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
                   ),
                 ),
                 const SizedBox(height: 16),
 
-                // Tombol "Kirim Ulang Email"
-                // Menggunakan logic canResendEmail dari Logic 1
+                // "Resend Email" Button
+                // Using canResendEmail logic from Logic 1
                 TextButton(
                   onPressed: canResendEmail ? sendVerificationEmail : null,
                   child: Text(
-                    canResendEmail ? 'Kirim Ulang Email' : 'Mohon tunggu...',
+                    canResendEmail ? 'Resend Email' : 'Please wait...',
                     style: TextStyle(
                       color: canResendEmail ? AppColors.active : Colors.grey,
                     ),
@@ -174,23 +174,23 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                 ),
                 const SizedBox(height: 30),
 
-                // Tombol Logout
-                // Ditambahkan agar sesuai desain, logic logout standar
+                // Logout Button
+                // Added to match the design, standard logout logic
                 TextButton.icon(
                   onPressed: () async {
-                    // Gunakan AuthService jika ada, atau FirebaseAuth langsung
+                    // Use AuthService if available, or FirebaseAuth directly
                     try {
                       await FirebaseAuth.instance.signOut();
                       // AuthService().signOut();
                       if(context.mounted) {
-                        // Navigasi ke login jika diperlukan, atau router akan handle auth state change
+                        // Navigate to login if needed, or the router will handle the auth state change
                       }
                     } catch (e) {
                       // Handle error
                     }
                   },
                   icon: const Icon(Icons.logout, size: 18, color: Colors.grey),
-                  label: const Text('Logout / Ganti Email',
+                  label: const Text('Logout / Change Email',
                       style: TextStyle(color: Colors.grey)),
                 ),
               ],

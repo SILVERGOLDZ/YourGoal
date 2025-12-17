@@ -4,7 +4,7 @@ import '../../models/goal_model.dart';
 import '../../services/goaldata_service.dart';
 
 class NewRoadmapScreen extends StatefulWidget {
-  final RoadmapModel? existingRoadmap; // untuk edit mode
+  final RoadmapModel? existingRoadmap; // for edit mode
   const NewRoadmapScreen({super.key, this.existingRoadmap});
 
   @override
@@ -36,7 +36,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
     super.dispose();
   }
 
-  // Validasi deadline steps - hanya saat save, bukan saat edit individual
+  // Validate step deadlines - only on save, not on individual edit
   String? _validateStepDeadlines() {
     for (int i = 1; i < _addedSteps.length; i++) {
       if (_addedSteps[i].deadline.isBefore(_addedSteps[i - 1].deadline) ||
@@ -62,15 +62,17 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
 
   Future<void> _saveNewGoal() async {
     if (_titleController.text.isEmpty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Title is required")));
       return;
     }
     if (_addedSteps.isEmpty) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 1 step")));
       return;
     }
 
-    // Validasi deadline
+    // Validate deadline
     String? deadlineError = _validateStepDeadlines();
     if (deadlineError != null) {
       _showErrorDialog("Invalid Deadline Order", deadlineError);
@@ -101,6 +103,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
         context.pop();
       }
     } catch (e) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -322,6 +325,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
     final bool isCompletedStep = existingStep?.isCompleted ?? false;
 
     if (isCompletedStep) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Completed steps cannot be edited or deleted")),
       );
@@ -334,7 +338,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
 
     DateTime? selectedDeadline = existingStep?.deadline;
 
-    // Minimum deadline adalah hari ini (tidak lagi bergantung pada step sebelumnya)
+    // The minimum deadline is today (no longer dependent on the previous step)
     DateTime minDeadline = DateTime.now();
 
     showDialog(
@@ -397,13 +401,13 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
 
                       const SizedBox(height: 16),
 
-                      _buildLabel(context, "Sub task to complete this target (optional)"),
+                      _buildLabel(context, "Sub-tasks to complete this target (optional)"),
                       const SizedBox(height: 10),
-                      _buildPopupTextField(context, controller: descController, hint: "1. Talk to senior for guidance\n2. Learn by watching others compete\n3. etc"),
+                      _buildPopupTextField(context, controller: descController, hint: "1. Talk to a senior for guidance\n2. Learn by watching others compete\n3. etc"),
 
                       const SizedBox(height: 16),
 
-                      _buildLabel(context, "Letter for future me (optional)"),
+                      _buildLabel(context, "Letter for my future self (optional)"),
                       const SizedBox(height: 10),
                       _buildPopupTextField(context, controller: messageController, hint: "Don't give up..."),
 
@@ -418,6 +422,7 @@ class _NewRoadmapScreenState extends State<NewRoadmapScreen> {
                           ),
                           onPressed: () {
                             if (titleController.text.trim().isEmpty || selectedDeadline == null) {
+                              ScaffoldMessenger.of(context).clearSnackBars();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text("Title & Deadline are required")),
                               );

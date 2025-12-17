@@ -39,12 +39,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (error == null) {
         // SUCCESS
-        showSnackBar(context, 'A password reset link has been sent to your email!');
+        showSnackBar('A password reset link has been sent to your email!');
         // Optional: Go back to the login page after success
         context.pop();
       } else {
         // FAILED
-        showSnackBar(context, error, isError: true);
+        showSnackBar(error, isError: true);
       }
     }
   }

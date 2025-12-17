@@ -6,7 +6,7 @@ class PostModel {
   final String username;
   final String text;
   final List<String> likedBy;
-  final List<String> savedBy; // <-- TAMBAHAN BARU
+  final List<String> savedBy;
   final Timestamp timestamp;
 
   PostModel({
@@ -15,7 +15,7 @@ class PostModel {
     required this.username,
     required this.text,
     required this.likedBy,
-    required this.savedBy, // <-- TAMBAHAN BARU
+    required this.savedBy,
     required this.timestamp,
   });
 
@@ -28,7 +28,7 @@ class PostModel {
       username: map['username'] ?? 'User',
       text: map['text'] ?? '',
       likedBy: List<String>.from(map['likedBy'] ?? []),
-      savedBy: List<String>.from(map['savedBy'] ?? []), // <-- TAMBAHAN BARU
+      savedBy: List<String>.from(map['savedBy'] ?? []),
       timestamp: map['timestamp'] ?? Timestamp.now(),
     );
   }
