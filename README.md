@@ -21,7 +21,7 @@
 Berikut adalah link penting untuk pengumpulan Final Project ini:
 
 ### 📱 File Aplikasi (APK)
-- **GitHub Release (Recommended):** [🔗 Klik disini untuk Download APK](LINK_GITHUB_RELEASE_ANDA_DISINI)
+- **GitHub Release (Recommended):** [🔗 Klik disini untuk Download APK](https://github.com/SILVERGOLDZ/YourGoal/releases/tag/v1.0.3)
 - **Google Drive (Mirror):** [🔗 Link Google Drive](https://drive.google.com/drive/folders/1l9mEOJ40mfsPBKB9n-qtS-P-zXvodye_?usp=sharing)
 
 ### 📂 Dokumentasi Proyek (SRS)
