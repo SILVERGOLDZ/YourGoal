@@ -108,9 +108,9 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
+          files: app-release.apk
           body: |
-            ## YourGoal v${{ needs.build.outputs.version }}
+            ## YourGoal
     
             ### 📱 Download
             Download the APK below and install on your Android device.
