@@ -108,7 +108,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: app-release.apk
+          files: build/app/outputs/flutter-apk/app-release.apk
           body: |
             ## YourGoal v${{ needs.build.outputs.version }}
     
